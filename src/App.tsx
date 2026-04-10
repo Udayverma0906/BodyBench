@@ -1,9 +1,7 @@
+import Landing from "./pages/Landing";
+
 function App() {
-  return (
-    <div className="text-3xl font-bold text-center mt-10">
-      BodyBench setup works
-    </div>
-  )
+  return <Landing />;
 }
 
-export default App
+export default App;
