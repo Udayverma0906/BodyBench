@@ -41,10 +41,10 @@ export default function Landing({ onStart }: Props) {
   const [showHelp, setShowHelp] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       <Navbar />
 
-      <section className="px-6 pt-16 pb-24 md:pt-20 md:pb-28">
+      <section className="flex-1 flex items-center px-6 py-6 overflow-y-auto">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
 
           {/* Left — hero copy */}
