@@ -1,34 +1,51 @@
-type Props = {
+interface Props {
   label: string;
   value?: number;
   onChange: (value: number | null) => void;
   error?: string;
-};
+  min?: number;
+  step?: number;
+  placeholder?: string;
+}
 
-function InputField({ label, value, onChange, error }: Props) {
+export default function InputField({
+  label,
+  value,
+  onChange,
+  error,
+  min = 0,
+  step = 1,
+  placeholder,
+}: Props) {
   return (
-    <div className="space-y-1">
-      <label className="block text-sm font-medium text-gray-700">
+    <div className="space-y-1.5">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
         {label}
       </label>
 
       <input
         type="number"
         value={value ?? ""}
+        min={min}
+        step={step}
+        placeholder={placeholder}
         onChange={(e) => {
           const val = e.target.value;
           onChange(val === "" ? null : Number(val));
         }}
-        className={`w-full p-3 rounded-lg border outline-none transition
-          ${error ? "border-red-500 focus:ring-2 focus:ring-red-200" : "border-gray-300 focus:ring-2 focus:ring-blue-200"}
-        `}
+        className={[
+          "w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-900",
+          "text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600",
+          "outline-none transition",
+          error
+            ? "border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900"
+            : "border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 focus:border-blue-400 dark:focus:border-blue-500",
+        ].join(" ")}
       />
 
       {error && (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
       )}
     </div>
   );
 }
-
-export default InputField;
