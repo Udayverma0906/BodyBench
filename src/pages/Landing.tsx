@@ -1,33 +1,42 @@
 import Navbar from "../components/layout/Navbar";
 
-function Landing() {
+type Props = {
+  onStart: () => void;
+};
+
+function Landing({ onStart }: Props) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-white">
       <Navbar />
 
-      <section className="px-6 py-24 md:py-32">
+      <section className="px-6 pt-16 pb-24 md:pt-20 md:pb-28">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          
+
           {/* Left Content */}
-          <div>
+          <div className="relative">
+            <div className="absolute -top-10 -left-10 w-72 h-72 bg-blue-100 rounded-full blur-3xl opacity-30"></div>
+
             <p className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 font-medium text-sm mb-6">
               Smarter Fitness Assessment
             </p>
 
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight">
+            <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight">
               Know Your Body.
               <br />
               Improve With Data.
             </h1>
 
-            <p className="mt-6 text-lg text-gray-600 leading-relaxed max-w-xl">
+            <p className="mt-6 text-lg text-gray-600 leading-relaxed max-w-lg">
               BodyBench helps you assess your physical health through simple
               exercises, compare results with trusted fitness benchmarks, and
               track progress over time.
             </p>
 
             <div className="mt-10 flex flex-wrap gap-4">
-              <button className="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition shadow-md">
+              <button
+                onClick={onStart}
+                className="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 hover:scale-[1.02] transition-all duration-200 shadow-md"
+              >
                 Start Assessment
               </button>
 
@@ -37,9 +46,9 @@ function Landing() {
             </div>
           </div>
 
-          {/* Right Visual */}
+          {/* Right Card */}
           <div className="flex justify-center">
-            <div className="w-full max-w-md rounded-3xl bg-white shadow-xl p-8 border border-gray-100">
+            <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-8 border border-gray-100">
               <h3 className="text-xl font-bold text-gray-900 mb-6">
                 Your Fitness Snapshot
               </h3>
@@ -83,6 +92,7 @@ function Landing() {
               </div>
             </div>
           </div>
+
         </div>
       </section>
     </div>
