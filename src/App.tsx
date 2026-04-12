@@ -1,49 +1,44 @@
-import { useState } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Assessment from "./pages/Assessment";
 import Result from "./pages/Result";
 import { calculateScore } from "./utils/calculateScore";
 import type { AssessmentForm } from "./types/assessment";
-import type { ScoreBreakdown } from "./utils/calculateScore";
-
-type Page = "landing" | "assessment" | "result";
-
-interface ResultState {
-  score: number;
-  category: string;
-  breakdown: ScoreBreakdown[];
-}
 
 function App() {
-  const [page, setPage] = useState<Page>("landing");
-  const [result, setResult] = useState<ResultState | null>(null);
+  const navigate = useNavigate();
 
   const handleSubmit = (data: AssessmentForm) => {
     const res = calculateScore(data);
-    setResult({ score: res.total, category: res.category, breakdown: res.breakdown });
-    setPage("result");
+    navigate("/result", {
+      state: {
+        score: res.total,
+        category: res.category,
+        breakdown: res.breakdown,
+      },
+    });
   };
 
   return (
-    <>
-      {page === "landing" && (
-        <Landing onStart={() => setPage("assessment")} />
-      )}
-      {page === "assessment" && (
-        <Assessment
-          onSubmit={handleSubmit}
-          onBack={() => setPage("landing")}
-        />
-      )}
-      {page === "result" && result && (
-        <Result
-          score={result.score}
-          category={result.category}
-          breakdown={result.breakdown}
-          onRestart={() => setPage("landing")}
-        />
-      )}
-    </>
+    <Routes>
+      <Route
+        path="/"
+        element={<Landing onStart={() => navigate("/assessment")} />}
+      />
+      <Route
+        path="/assessment"
+        element={
+          <Assessment
+            onSubmit={handleSubmit}
+            onBack={() => navigate("/")}
+          />
+        }
+      />
+      <Route
+        path="/result"
+        element={<Result onRestart={() => navigate("/")} />}
+      />
+    </Routes>
   );
 }
 

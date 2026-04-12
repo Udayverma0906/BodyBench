@@ -1,12 +1,16 @@
+import { useLocation, Navigate } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Button from "../components/ui/Button";
 import ScoreRing from "../components/ui/ScoreRing";
 import type { ScoreBreakdown } from "../utils/calculateScore";
 
-interface Props {
+interface ResultState {
   score: number;
   category: string;
   breakdown: ScoreBreakdown[];
+}
+
+interface Props {
   onRestart: () => void;
 }
 
@@ -39,7 +43,14 @@ const CATEGORY_STYLES: Record<
 
 const FALLBACK_STYLE = CATEGORY_STYLES["Good"];
 
-export default function Result({ score, category, breakdown, onRestart }: Props) {
+export default function Result({ onRestart }: Props) {
+  const location = useLocation();
+  const state = location.state as ResultState | null;
+
+  // Guard against direct navigation / refresh — no result to show.
+  if (!state) return <Navigate to="/" replace />;
+
+  const { score, category, breakdown } = state;
   const style = CATEGORY_STYLES[category] ?? FALLBACK_STYLE;
 
   return (
