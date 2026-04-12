@@ -1,11 +1,13 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 import BasePopup from "../ui/BasePopup";
 
 // ── Update these two constants with your own links ──────────────────────────
 const LINKEDIN_URL = "https://www.linkedin.com/in/uday-verma0906/";
 const GITHUB_URL   = "https://github.com/Udayverma0906/BodyBench";
-const APP_VERSION  = "1.1.0";
+const APP_VERSION  = "1.2.0";
 // ────────────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -71,6 +73,7 @@ function ExternalLinkIcon() {
 
 export default function Navbar({ onBack }: Props) {
   const { theme, toggle } = useTheme();
+  const { user, signOut } = useAuth();
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -87,9 +90,9 @@ export default function Navbar({ onBack }: Props) {
               <ChevronLeft />
             </button>
           )}
-          <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <Link to="/" className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
             BodyBench
-          </span>
+          </Link>
         </div>
 
         {/* Right — actions */}
@@ -109,6 +112,30 @@ export default function Navbar({ onBack }: Props) {
           >
             {theme === "light" ? <MoonIcon /> : <SunIcon />}
           </button>
+
+          {/* Auth */}
+          <div className="flex items-center gap-2 ml-1 pl-3 border-l border-gray-200 dark:border-gray-700">
+            {user ? (
+              <>
+                <span className="w-7 h-7 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-xs font-bold flex items-center justify-center select-none">
+                  {user.email?.charAt(0).toUpperCase() ?? "U"}
+                </span>
+                <button
+                  onClick={signOut}
+                  className="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="text-sm font-medium px-3 py-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+              >
+                Sign In
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
 
