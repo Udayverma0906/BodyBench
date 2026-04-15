@@ -6,7 +6,7 @@ type Tier = { threshold: number; points: number };
 
 interface MetricConfig {
   tiers: Tier[];
-  /** Lower values score better (e.g. jog time, age). */
+  /** Lower values score better (e.g. jog time, resting HR). */
   lowerIsBetter?: boolean;
 }
 
@@ -25,22 +25,28 @@ function pickTier(value: number, { tiers, lowerIsBetter = false }: MetricConfig)
 }
 
 // ─── Scoring config ───────────────────────────────────────────────────────────
-// To adjust difficulty: edit thresholds/points here — no logic changes needed.
 
 const SCORING: Record<string, MetricConfig> = {
   jogTime: {
     lowerIsBetter: true,
     tiers: [
-      { threshold: 5,        points: 30 },
-      { threshold: 7,        points: 20 },
-      { threshold: Infinity, points: 10 },
+      { threshold: 5,        points: 25 },
+      { threshold: 7,        points: 17 },
+      { threshold: Infinity, points: 8  },
     ],
   },
   pushups: {
     tiers: [
       { threshold: 40, points: 20 },
-      { threshold: 20, points: 15 },
-      { threshold: 0,  points: 10 },
+      { threshold: 20, points: 14 },
+      { threshold: 0,  points: 7  },
+    ],
+  },
+  pullups: {
+    tiers: [
+      { threshold: 15, points: 20 },
+      { threshold: 8,  points: 14 },
+      { threshold: 0,  points: 7  },
     ],
   },
   squats: {
@@ -53,8 +59,30 @@ const SCORING: Record<string, MetricConfig> = {
   plank: {
     tiers: [
       { threshold: 120, points: 20 },
-      { threshold: 60,  points: 15 },
-      { threshold: 0,   points: 10 },
+      { threshold: 60,  points: 14 },
+      { threshold: 0,   points: 7  },
+    ],
+  },
+  situps: {
+    tiers: [
+      { threshold: 40, points: 15 },
+      { threshold: 25, points: 10 },
+      { threshold: 0,  points: 5  },
+    ],
+  },
+  flexibility: {
+    tiers: [
+      { threshold: 15, points: 15 },
+      { threshold: 5,  points: 10 },
+      { threshold: 0,  points: 5  },
+    ],
+  },
+  restingHR: {
+    lowerIsBetter: true,
+    tiers: [
+      { threshold: 60,       points: 15 },
+      { threshold: 72,       points: 10 },
+      { threshold: Infinity, points: 5  },
     ],
   },
   age: {
@@ -89,22 +117,57 @@ export function calculateScore(data: AssessmentForm): {
   category: string;
   breakdown: ScoreBreakdown[];
 } {
-  // Heavier people lift more absolute force on bodyweight exercises, so their
-  // rep count is scaled up relative to the 70 kg reference person.
-  const weightFactor = data.weight / REFERENCE_WEIGHT_KG;
-  const adjustedPushups = Math.round(data.pushups * weightFactor);
-  const adjustedSquats  = Math.round(data.squats  * weightFactor);
+  // Use provided weight for strength scaling, else reference body weight.
+  const weightFactor = data.weight ? data.weight / REFERENCE_WEIGHT_KG : 1;
 
-  const breakdown: ScoreBreakdown[] = [
-    { label: "Endurance", score: pickTier(data.jogTime,    SCORING.jogTime), max: 30 },
-    { label: "Push-ups",  score: pickTier(adjustedPushups, SCORING.pushups), max: 20 },
-    { label: "Squats",    score: pickTier(adjustedSquats,  SCORING.squats),  max: 15 },
-    { label: "Plank",     score: pickTier(data.plank,      SCORING.plank),   max: 20 },
-    { label: "Age Bonus", score: pickTier(data.age,        SCORING.age),     max: 15 },
+  // Build a list of metrics that actually have a value supplied.
+  type RawMetric = { label: string; earned: number; max: number } | null;
+
+  const raw: RawMetric[] = [
+    data.jogTime  !== undefined
+      ? { label: "Endurance",   earned: pickTier(data.jogTime, SCORING.jogTime), max: 25 }
+      : null,
+    data.pushups  !== undefined
+      ? { label: "Push-ups",    earned: pickTier(Math.round(data.pushups * weightFactor), SCORING.pushups), max: 20 }
+      : null,
+    data.pullups  !== undefined
+      ? { label: "Pull-ups",    earned: pickTier(Math.round(data.pullups * weightFactor), SCORING.pullups), max: 20 }
+      : null,
+    data.squats   !== undefined
+      ? { label: "Squats",      earned: pickTier(Math.round(data.squats  * weightFactor), SCORING.squats),  max: 15 }
+      : null,
+    data.plank    !== undefined
+      ? { label: "Plank",       earned: pickTier(data.plank, SCORING.plank), max: 20 }
+      : null,
+    data.situps   !== undefined
+      ? { label: "Sit-ups",     earned: pickTier(data.situps, SCORING.situps), max: 15 }
+      : null,
+    data.flexibility !== undefined
+      ? { label: "Flexibility", earned: pickTier(data.flexibility, SCORING.flexibility), max: 15 }
+      : null,
+    data.restingHR !== undefined
+      ? { label: "Recovery",    earned: pickTier(data.restingHR, SCORING.restingHR), max: 15 }
+      : null,
+    data.age      !== undefined
+      ? { label: "Age Bonus",   earned: pickTier(data.age, SCORING.age), max: 15 }
+      : null,
   ];
 
-  const total    = breakdown.reduce((sum, b) => sum + b.score, 0);
+  const metrics = raw.filter((m): m is NonNullable<RawMetric> => m !== null);
+
+  const totalEarned = metrics.reduce((sum, m) => sum + m.earned, 0);
+  const totalMax    = metrics.reduce((sum, m) => sum + m.max,    0);
+
+  // Normalize to 100 so the score is always comparable regardless of which
+  // optional fields were filled in.
+  const total    = totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : 0;
   const category = CATEGORIES.find((c) => total >= c.min)?.label ?? "Needs Improvement";
+
+  const breakdown: ScoreBreakdown[] = metrics.map((m) => ({
+    label: m.label,
+    score: m.earned,
+    max:   m.max,
+  }));
 
   return { total, category, breakdown };
 }

@@ -3,16 +3,25 @@ import type { AssessmentForm } from "../types/assessment";
 
 type Validator = (v?: number) => string;
 
-// Single source of truth for validation rules.
-// To change a rule, edit here — validateField and validateAll both use this.
+// Only validate range when a value is actually provided — no field is required.
 const VALIDATORS: Record<keyof AssessmentForm, Validator> = {
-  age:     (v) => (!v || v <= 0             ? "Enter a valid age"      : ""),
-  weight:  (v) => (!v || v <= 0             ? "Enter a valid weight"   : ""),
-  pushups: (v) => (v === undefined || v < 0 ? "Enter push-up count"   : ""),
-  squats:  (v) => (v === undefined || v < 0 ? "Enter squat count"     : ""),
-  plank:   (v) => (!v || v <= 0             ? "Enter plank duration"   : ""),
-  jogTime: (v) => (!v || v <= 0             ? "Enter jog time"         : ""),
+  age:         (v) => (v !== undefined && v <= 0          ? "Age must be positive"          : ""),
+  height:      (v) => (v !== undefined && v <= 0          ? "Height must be positive"        : ""),
+  weight:      (v) => (v !== undefined && v <= 0          ? "Weight must be positive"        : ""),
+  pushups:     (v) => (v !== undefined && v < 0           ? "Can't be negative"              : ""),
+  pullups:     (v) => (v !== undefined && v < 0           ? "Can't be negative"              : ""),
+  squats:      (v) => (v !== undefined && v < 0           ? "Can't be negative"              : ""),
+  plank:       (v) => (v !== undefined && v <= 0          ? "Plank must be positive"         : ""),
+  situps:      (v) => (v !== undefined && v < 0           ? "Can't be negative"              : ""),
+  jogTime:     (v) => (v !== undefined && v <= 0          ? "Jog time must be positive"      : ""),
+  flexibility: (v) => (v !== undefined && v < -50         ? "Enter a valid reach distance"   : ""),
+  restingHR:   (v) => (v !== undefined && (v <= 0 || v > 220) ? "Enter a valid heart rate"  : ""),
 };
+
+// The exercise keys that contribute to the score (weight & height are just helpers).
+const EXERCISE_KEYS: (keyof AssessmentForm)[] = [
+  "pushups", "pullups", "squats", "plank", "situps", "jogTime", "flexibility", "restingHR",
+];
 
 export function useAssessment() {
   const [form, setForm]     = useState<Partial<AssessmentForm>>({});
@@ -25,12 +34,20 @@ export function useAssessment() {
   };
 
   const validateAll = (): boolean => {
+    // Re-run range checks on all filled fields.
     const newErrors = Object.fromEntries(
       (Object.keys(VALIDATORS) as (keyof AssessmentForm)[]).map((name) => [
         name,
         VALIDATORS[name](form[name]),
       ])
     );
+
+    // Require at least one exercise field to have a value.
+    const hasAnyExercise = EXERCISE_KEYS.some((k) => form[k] !== undefined);
+    if (!hasAnyExercise) {
+      newErrors["_form"] = "Fill in at least one exercise field to calculate your score.";
+    }
+
     setErrors(newErrors);
     return Object.values(newErrors).every((e) => e === "");
   };
