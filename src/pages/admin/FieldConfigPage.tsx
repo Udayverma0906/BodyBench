@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import Navbar from "../../components/layout/Navbar";
 import BasePopup from "../../components/ui/BasePopup";
 import { supabase } from "../../lib/supabase";
+import { DEFAULT_FIELD_CONFIGS } from "../../lib/defaultFieldConfigs";
 import type { FieldConfig } from "../../types/database";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -18,6 +19,9 @@ const SECTION_HINT: Record<FieldConfig["section"], string> = {
   strength:  "Max reps / weight — higher is better.",
   endurance: "Time / HR metrics — lower is often better.",
 };
+
+// field_keys that originated from the built-in defaults — used only for the "Standard" badge
+const STANDARD_KEYS = new Set(DEFAULT_FIELD_CONFIGS.map(d => d.field_key));
 
 const DEFAULT_TIERS: Record<FieldConfig["section"], TierRow[]> = {
   personal:  [{ threshold: "29", points: "15" }, { threshold: "49", points: "10" }, { threshold: "99", points: "5" }],
@@ -125,13 +129,14 @@ function Toggle({ checked, onChange, label }: {
 interface FieldCardProps {
   config: FieldConfig;
   deleted?: boolean;
+  isStandard?: boolean;     // shows "Standard" badge — informational only, no control difference
   onEdit?: () => void;
   onDelete?: () => void;
   onToggleVisible?: () => void;
   onRestore?: () => void;
 }
 
-function FieldCard({ config, deleted = false, onEdit, onDelete, onToggleVisible, onRestore }: FieldCardProps) {
+function FieldCard({ config, deleted = false, isStandard = false, onEdit, onDelete, onToggleVisible, onRestore }: FieldCardProps) {
   const op = config.lower_is_better ? "≤" : "≥";
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 flex items-start gap-4 transition ${deleted ? "opacity-50" : ""}`}>
@@ -144,6 +149,15 @@ function FieldCard({ config, deleted = false, onEdit, onDelete, onToggleVisible,
           </code>
           {config.unit && (
             <span className="text-xs text-gray-400 dark:text-gray-500">{config.unit}</span>
+          )}
+          {isStandard ? (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
+              Standard
+            </span>
+          ) : (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400">
+              Custom
+            </span>
           )}
           {config.required && (
             <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400">
@@ -558,10 +572,10 @@ function JoinCodeCard({ userId }: { userId: string }) {
 export default function FieldConfigPage() {
   const { user } = useAuth();
 
-  const [configs, setConfigs]       = useState<FieldConfig[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [configs, setConfigs] = useState<FieldConfig[]>([]);   // admin's own fields (all, incl. deleted)
+  const [loading, setLoading] = useState(true);
+  const [showDeleted, setShowDeleted]   = useState(false);
+  const [refreshKey, setRefreshKey]     = useState(0);
 
   // Form popup
   const [formOpen, setFormOpen]     = useState(false);
@@ -588,17 +602,67 @@ export default function FieldConfigPage() {
   useEffect(() => {
     if (!user) return;
     let active = true;
-    supabase
-      .from("field_configs")
-      .select("*")
-      .eq("admin_id", user.id)
-      .order("section")
-      .order("sort_order")
-      .then(({ data }) => {
+
+    async function loadAndSeed() {
+      // Fetch ALL admin-owned rows (including deleted) so we know which standard
+      // fields have ever existed for this admin and shouldn't be re-seeded.
+      const { data: adminData } = await supabase
+        .from("field_configs")
+        .select("*")
+        .eq("admin_id", user!.id)
+        .order("section")
+        .order("sort_order");
+
+      if (!active) return;
+
+      const existing = (adminData as FieldConfig[]) ?? [];
+
+      // Seed any DEFAULT_FIELD_CONFIGS whose field_key the admin has never had.
+      // We skip keys that already exist (even as soft-deleted) so the admin's
+      // deliberate deletions are not accidentally restored.
+      const adminAllKeys = new Set(existing.map(c => c.field_key));
+      const toSeed = DEFAULT_FIELD_CONFIGS.filter(d => !adminAllKeys.has(d.field_key));
+
+      if (toSeed.length > 0) {
+        await supabase.from("field_configs").insert(
+          toSeed.map(d => ({
+            admin_id:        user!.id,
+            label:           d.label,
+            field_key:       d.field_key,
+            section:         d.section,
+            field_type:      "number" as const,
+            description:     d.description,
+            placeholder:     d.placeholder,
+            unit:            d.unit,
+            min_value:       d.min_value,
+            max_value:       d.max_value,
+            step_value:      d.step_value,
+            required:        d.required,
+            lower_is_better: d.lower_is_better,
+            visible:         d.visible,
+            is_deleted:      false,
+            sort_order:      d.sort_order,
+            scoring_tiers:   d.scoring_tiers,
+            max_points:      d.max_points,
+          }))
+        );
         if (!active) return;
-        setConfigs((data as FieldConfig[]) ?? []);
-        setLoading(false);
-      });
+        // Re-fetch after seeding so we have the real DB ids
+        const { data: refreshed } = await supabase
+          .from("field_configs")
+          .select("*")
+          .eq("admin_id", user!.id)
+          .order("section")
+          .order("sort_order");
+        if (!active) return;
+        setConfigs((refreshed as FieldConfig[]) ?? []);
+      } else {
+        setConfigs(existing);
+      }
+      setLoading(false);
+    }
+
+    loadAndSeed();
     return () => { active = false; };
   }, [user, refreshKey]);
 
@@ -770,6 +834,7 @@ export default function FieldConfigPage() {
 
   const active  = configs.filter(c => !c.is_deleted);
   const deleted = configs.filter(c =>  c.is_deleted);
+
   const grouped = SECTIONS.map(s => ({
     ...s,
     fields: active.filter(c => c.section === s.key),
@@ -822,6 +887,7 @@ export default function FieldConfigPage() {
                       <FieldCard
                         key={cfg.id}
                         config={cfg}
+                        isStandard={STANDARD_KEYS.has(cfg.field_key)}
                         onEdit={() => openEdit(cfg)}
                         onDelete={() => setDeleteId(cfg.id)}
                         onToggleVisible={() => handleToggleVisible(cfg)}
