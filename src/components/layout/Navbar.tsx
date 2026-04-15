@@ -7,7 +7,7 @@ import BasePopup from "../ui/BasePopup";
 // ── Update these two constants with your own links ──────────────────────────
 const LINKEDIN_URL = "https://www.linkedin.com/in/uday-verma0906/";
 const GITHUB_URL   = "https://github.com/Udayverma0906/BodyBench";
-const APP_VERSION  = "1.4.0";
+const APP_VERSION  = "1.5.0";
 // ────────────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -110,6 +110,14 @@ export default function Navbar({ onBack }: Props) {
 
         {/* Right — actions */}
         <div className="flex items-center gap-1">
+          {user && (
+            <Link
+              to="/dashboard"
+              className="px-3 py-1.5 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              Dashboard
+            </Link>
+          )}
           {user && (
             <Link
               to="/history"

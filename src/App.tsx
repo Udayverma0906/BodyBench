@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Assessment from "./pages/Assessment";
 import Result from "./pages/Result";
 import History from "./pages/History";
+import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { calculateScore } from "./utils/calculateScore";
 import { supabase } from "./lib/supabase";
@@ -67,6 +68,14 @@ function App() {
         element={
           <ProtectedRoute>
             <History />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
           </ProtectedRoute>
         }
       />
