@@ -91,26 +91,10 @@ function TrainerSection({ profile, userId, onRefresh }: {
     setLoading(true);
     setError(null);
 
-    const { data, error: queryErr } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("join_code", trimmed)
-      .eq("role", "admin")
-      .single();
+    const { error: err } = await supabase.rpc("join_trainer", { p_code: trimmed });
 
-    if (queryErr || !data) {
+    if (err) {
       setError("Code not found. Check with your trainer.");
-      setLoading(false);
-      return;
-    }
-
-    const { error: updateErr } = await supabase
-      .from("profiles")
-      .update({ admin_id: data.id })
-      .eq("id", userId);
-
-    if (updateErr) {
-      setError("Failed to join. Please try again.");
     } else {
       setCode("");
       await onRefresh();
