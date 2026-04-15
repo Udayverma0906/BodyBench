@@ -7,7 +7,7 @@ import BasePopup from "../ui/BasePopup";
 // ── Update these two constants with your own links ──────────────────────────
 const LINKEDIN_URL = "https://www.linkedin.com/in/uday-verma0906/";
 const GITHUB_URL   = "https://github.com/Udayverma0906/BodyBench";
-const APP_VERSION  = "1.3.0";
+const APP_VERSION  = "1.3.1";
 // ────────────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -75,6 +75,19 @@ export default function Navbar({ onBack }: Props) {
   const { theme, toggle } = useTheme();
   const { user, signOut } = useAuth();
   const [showDetails, setShowDetails] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+
+  const avatarUrl: string | undefined =
+    user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture;
+  const displayName: string =
+    user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? user?.email ?? "User";
+
+  const handleSignOut = async () => {
+    setShowSignOutConfirm(false);
+    setShowProfile(false);
+    await signOut();
+  };
 
   return (
     <>
@@ -125,17 +138,19 @@ export default function Navbar({ onBack }: Props) {
           {/* Auth */}
           <div className="flex items-center gap-2 ml-1 pl-3 border-l border-gray-200 dark:border-gray-700">
             {user ? (
-              <>
-                <span className="w-7 h-7 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-xs font-bold flex items-center justify-center select-none">
-                  {user.email?.charAt(0).toUpperCase() ?? "U"}
-                </span>
-                <button
-                  onClick={signOut}
-                  className="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
-                >
-                  Sign out
-                </button>
-              </>
+              <button
+                onClick={() => setShowProfile(true)}
+                aria-label="Your profile"
+                className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-blue-500 transition focus:outline-none"
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <span className="w-full h-full bg-blue-600 dark:bg-blue-500 text-white text-xs font-bold flex items-center justify-center select-none">
+                    {user.email?.charAt(0).toUpperCase() ?? "U"}
+                  </span>
+                )}
+              </button>
             ) : (
               <Link
                 to="/login"
@@ -147,6 +162,66 @@ export default function Navbar({ onBack }: Props) {
           </div>
         </div>
       </nav>
+
+      {/* Profile popup */}
+      <BasePopup
+        isOpen={showProfile}
+        onClose={() => setShowProfile(false)}
+        title="Your Profile"
+      >
+        <div className="flex flex-col items-center gap-3 mb-5">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={displayName}
+              referrerPolicy="no-referrer"
+              className="w-16 h-16 rounded-full object-cover ring-2 ring-blue-100 dark:ring-blue-900"
+            />
+          ) : (
+            <span className="w-16 h-16 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-2xl font-bold flex items-center justify-center select-none">
+              {user?.email?.charAt(0).toUpperCase() ?? "U"}
+            </span>
+          )}
+          <div className="text-center">
+            <p className="font-semibold text-gray-900 dark:text-white text-sm">{displayName}</p>
+            {user?.email && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{user.email}</p>
+            )}
+          </div>
+        </div>
+
+        <button
+          onClick={() => setShowSignOutConfirm(true)}
+          className="w-full py-2 rounded-xl text-sm font-medium bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 transition"
+        >
+          Sign Out
+        </button>
+      </BasePopup>
+
+      {/* Sign-out confirm popup */}
+      <BasePopup
+        isOpen={showSignOutConfirm}
+        onClose={() => setShowSignOutConfirm(false)}
+        title="Sign Out"
+      >
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Are you sure you want to sign out?
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowSignOutConfirm(false)}
+            className="flex-1 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="flex-1 py-2 rounded-xl text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition"
+          >
+            Sign Out
+          </button>
+        </div>
+      </BasePopup>
 
       {/* Details popup */}
       <BasePopup
