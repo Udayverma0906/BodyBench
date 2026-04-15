@@ -138,3 +138,10 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Playwright – auth state (contains session cookies/tokens – never commit)
+tests/e2e/.auth/
+
+# Playwright – generated test output
+playwright-report/
+test-results/
