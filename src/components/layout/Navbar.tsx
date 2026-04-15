@@ -179,18 +179,17 @@ function TrainerSection({ profile, userId, onRefresh }: {
 
 // ── BecomeTrainerSection — shown inside the profile popup for non-admin users ──
 
-function BecomeTrainerSection({ userId, userEmail, userName }: {
-  userId: string;
-  userEmail: string;
-  userName: string;
-}) {
-  const [request, setRequest]     = useState<TrainerRequest | null | undefined>(undefined);
-  const [message, setMessage]     = useState("");
-  const [showForm, setShowForm]   = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState<string | null>(null);
+function BecomeTrainerSection({ userId }: { userId: string }) {
+  const [request, setRequest]         = useState<TrainerRequest | null | undefined>(undefined);
+  const [message, setMessage]         = useState("");
+  const [showForm, setShowForm]       = useState(false);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState<string | null>(null);
+  const [newRejection, setNewRejection] = useState(false);
 
-  // Fetch existing request on mount
+  const storageKey = `bb_trainer_req_${userId}`;
+
+  // Fetch existing request; detect pending → rejected change for notification (#9)
   useEffect(() => {
     supabase
       .from("trainer_requests")
@@ -199,24 +198,44 @@ function BecomeTrainerSection({ userId, userEmail, userName }: {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
-      .then(({ data }) => setRequest(data ?? null));
-  }, [userId]);
+      .then(({ data }) => {
+        const req = (data as TrainerRequest) ?? null;
+        setRequest(req);
+        if (req?.status === "rejected" && localStorage.getItem(storageKey) === "pending") {
+          setNewRejection(true);
+        }
+        if (req) localStorage.setItem(storageKey, req.status);
+      });
+  }, [userId, storageKey]);
 
   const submit = async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase
-      .from("trainer_requests")
-      .insert({ user_id: userId, user_email: userEmail, user_name: userName, message: message.trim() || null })
-      .select()
-      .single();
+    const { error: err } = await supabase.rpc("submit_trainer_request", {
+      p_message: message.trim() || null,
+    });
     if (err) {
-      setError("Failed to submit. Please try again.");
+      setError(err.message);
     } else {
-      setRequest(data as TrainerRequest);
+      const { data } = await supabase
+        .from("trainer_requests")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const req = (data as TrainerRequest) ?? null;
+      setRequest(req);
+      if (req) localStorage.setItem(storageKey, req.status);
+      setMessage("");
       setShowForm(false);
     }
     setLoading(false);
+  };
+
+  const dismissRejection = () => {
+    setNewRejection(false);
+    localStorage.setItem(storageKey, "rejected");
   };
 
   // Still loading initial state
@@ -226,7 +245,23 @@ function BecomeTrainerSection({ userId, userEmail, userName }: {
   if (request?.status === "approved") return null;
 
   return (
-    <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-1 mb-4">
+    <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-1 mb-4 space-y-3">
+      {/* #9 — new rejection notification banner */}
+      {newRejection && (
+        <div className="flex items-start justify-between gap-2 bg-red-50 dark:bg-red-950 rounded-xl px-3 py-2.5">
+          <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">
+            Your trainer request was reviewed and not approved.
+          </p>
+          <button
+            onClick={dismissRejection}
+            className="text-xs text-red-400 hover:text-red-600 dark:hover:text-red-300 shrink-0 transition"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Pending state */}
       {request?.status === "pending" && (
         <div className="flex items-center justify-between">
@@ -248,7 +283,7 @@ function BecomeTrainerSection({ userId, userEmail, userName }: {
             <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">Request was not approved.</p>
           </div>
           <button
-            onClick={() => { setRequest(null); setShowForm(true); }}
+            onClick={() => { dismissRejection(); setRequest(null); setShowForm(true); }}
             className="text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
           >
             Try again
@@ -477,11 +512,7 @@ export default function Navbar({ onBack }: Props) {
 
         {/* Become a Trainer — non-admin users only */}
         {user && !isAdmin && (
-          <BecomeTrainerSection
-            userId={user.id}
-            userEmail={user.email ?? ""}
-            userName={user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? ""}
-          />
+          <BecomeTrainerSection userId={user.id} />
         )}
 
         <button
