@@ -59,7 +59,9 @@ export default function BasePopup({ isOpen, onClose, title, children, size = "sm
   }, [isOpen]);
 
   return (
-    // Always in DOM so CSS transitions play on both open and close
+    // Always in DOM so CSS transitions play on both open and close.
+    // Use transition-opacity (not transition-all) — opacity is compositor-only
+    // (no layout, no paint) so the browser keeps it on the GPU thread at 60 fps.
     <div
       aria-modal="true"
       role="dialog"
@@ -68,18 +70,20 @@ export default function BasePopup({ isOpen, onClose, title, children, size = "sm
       className={[
         "fixed inset-0 z-50 flex items-center justify-center px-4",
         "bg-black/50 backdrop-blur-sm",
-        "transition-all duration-200",
+        "transition-opacity duration-200 ease-out",
         isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
       ].join(" ")}
     >
-      {/* Card — stop propagation so clicking inside doesn't close */}
+      {/* Card — stop propagation so clicking inside doesn't close.
+          transition-[opacity,transform] keeps animation on the compositor thread.
+          transform-gpu promotes the element to its own composite layer. */}
       <div
         onClick={(e) => e.stopPropagation()}
         className={[
           `relative w-full ${SIZE_CLASS[size]}`,
           "bg-white dark:bg-gray-800",
           "rounded-2xl border border-gray-100 dark:border-gray-700 shadow-2xl",
-          "p-6 transition-all duration-200",
+          "p-6 transform-gpu transition-[opacity,transform] duration-200 ease-out",
           isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0",
         ].join(" ")}
       >
