@@ -102,8 +102,11 @@ function SkeletonCard() {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function Assessment({ onSubmit, onBack }: Props) {
-  const { profile } = useAuth();
-  const { configs, loading: configsLoading } = useFieldConfigs(profile?.admin_id);
+  const { profile, user, isAdmin } = useAuth();
+  // Admins see their own configured fields (admin_id = user.id).
+  // Regular users see their assigned admin's fields via profile.admin_id.
+  const adminId = isAdmin ? user?.id : profile?.admin_id;
+  const { configs, loading: configsLoading } = useFieldConfigs(adminId);
 
   const [form, setForm]     = useState<AssessmentForm>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
