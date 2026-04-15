@@ -14,18 +14,38 @@ export interface Assessment {
   is_active: boolean;
 }
 
+export interface Profile {
+  id: string;
+  role: "admin" | "user";
+  admin_id: string | null;  // which admin manages this user; null = no admin
+  created_at: string;
+}
+
+export interface ScoringTier {
+  threshold: number;
+  points: number;
+}
+
 export interface FieldConfig {
   id: string;
-  user_id: string | null; // null = global default visible to everyone
+  admin_id: string | null;      // null = global system default; otherwise the owning admin's user id
+  user_id: string | null;       // legacy column — kept for backwards compat, use admin_id instead
   label: string;
-  field_key: string;      // stable identifier — never rename after creation
+  field_key: string;            // stable identifier — NEVER rename after creation (breaks form_data JSONB)
   section: "personal" | "strength" | "endurance";
+  field_type: "number";         // reserved for future: 'select' | 'text'
   placeholder: string | null;
+  description: string | null;   // help text shown below the input
   unit: string | null;
   min_value: number | null;
   max_value: number | null;
   step_value: number;
+  required: boolean;
+  lower_is_better: boolean;     // true for metrics like jog time or resting HR
+  scoring_tiers: ScoringTier[]; // evaluated top-to-bottom, first match wins; must have ≥ 1 tier
+  max_points: number;           // max score contribution (= max of all tier points)
   visible: boolean;
+  is_deleted: boolean;          // soft delete — row is never hard-deleted to preserve historical scoring
   sort_order: number;
   created_at: string;
 }
@@ -40,10 +60,15 @@ export interface Database {
         Insert: Omit<Assessment, "id" | "taken_at">;
         Update: Partial<Omit<Assessment, "id" | "user_id" | "taken_at">> & { is_active?: boolean };
       };
+      profiles: {
+        Row: Profile;
+        Insert: Omit<Profile, "created_at">;
+        Update: Partial<Pick<Profile, "admin_id">>;  // role changes via Supabase dashboard only
+      };
       field_configs: {
         Row: FieldConfig;
-        Insert: Omit<FieldConfig, "id" | "created_at">;
-        Update: Partial<Omit<FieldConfig, "id" | "user_id" | "field_key" | "created_at">>;
+        Insert: Omit<FieldConfig, "id" | "created_at" | "user_id">;
+        Update: Partial<Omit<FieldConfig, "id" | "admin_id" | "user_id" | "field_key" | "created_at">>;
       };
     };
   };
