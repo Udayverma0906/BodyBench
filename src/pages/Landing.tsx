@@ -87,7 +87,7 @@ export default function Landing({ onStart }: Props) {
 
               {/* Score ring + category */}
               <div className="flex flex-col items-center gap-3 mb-6">
-                <ScoreRing score={78} size={140} colorClass="text-blue-500 dark:text-blue-400" />
+                <ScoreRing score={75} size={140} colorClass="text-blue-500 dark:text-blue-400" />
                 <span className="text-sm font-semibold px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400">
                   Good — Keep pushing!
                 </span>
