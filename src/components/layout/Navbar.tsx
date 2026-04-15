@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import BasePopup from "../ui/BasePopup";
 import { supabase } from "../../lib/supabase";
-import type { Profile } from "../../types/database";
+import type { Profile, TrainerRequest } from "../../types/database";
 
 // ── Update these two constants with your own links ──────────────────────────
 const LINKEDIN_URL = "https://www.linkedin.com/in/uday-verma0906/";
@@ -193,14 +193,153 @@ function TrainerSection({ profile, userId, onRefresh }: {
   );
 }
 
+// ── BecomeTrainerSection — shown inside the profile popup for non-admin users ──
+
+function BecomeTrainerSection({ userId, userEmail, userName }: {
+  userId: string;
+  userEmail: string;
+  userName: string;
+}) {
+  const [request, setRequest]     = useState<TrainerRequest | null | undefined>(undefined);
+  const [message, setMessage]     = useState("");
+  const [showForm, setShowForm]   = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+
+  // Fetch existing request on mount
+  useEffect(() => {
+    supabase
+      .from("trainer_requests")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setRequest(data ?? null));
+  }, [userId]);
+
+  const submit = async () => {
+    setLoading(true);
+    setError(null);
+    const { data, error: err } = await supabase
+      .from("trainer_requests")
+      .insert({ user_id: userId, user_email: userEmail, user_name: userName, message: message.trim() || null })
+      .select()
+      .single();
+    if (err) {
+      setError("Failed to submit. Please try again.");
+    } else {
+      setRequest(data as TrainerRequest);
+      setShowForm(false);
+    }
+    setLoading(false);
+  };
+
+  // Still loading initial state
+  if (request === undefined) return null;
+
+  // Approved — they're admin now, this section won't show anyway
+  if (request?.status === "approved") return null;
+
+  return (
+    <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-1 mb-4">
+      {/* Pending state */}
+      {request?.status === "pending" && (
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Trainer Access</p>
+            <p className="text-xs text-amber-500 dark:text-amber-400 mt-0.5">Request pending review…</p>
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-medium">
+            Pending
+          </span>
+        </div>
+      )}
+
+      {/* Rejected state */}
+      {request?.status === "rejected" && !showForm && (
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Trainer Access</p>
+            <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">Request was not approved.</p>
+          </div>
+          <button
+            onClick={() => { setRequest(null); setShowForm(true); }}
+            className="text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {/* No request yet — show CTA */}
+      {!request && !showForm && (
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Are you a trainer?</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Request access to manage clients.</p>
+          </div>
+          <button
+            onClick={() => setShowForm(true)}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition"
+          >
+            Request
+          </button>
+        </div>
+      )}
+
+      {/* Request form */}
+      {showForm && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Request Trainer Access</p>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Optional: tell us a bit about yourself…"
+            rows={3}
+            className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none transition"
+          />
+          {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setShowForm(false); setError(null); }}
+              className="flex-1 py-1.5 text-xs rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={submit}
+              disabled={loading}
+              className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white transition"
+            >
+              {loading ? "Sending…" : "Submit"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Navbar ─────────────────────────────────────────────────────────────────────
 
 export default function Navbar({ onBack }: Props) {
   const { theme, toggle } = useTheme();
-  const { user, profile, isAdmin, signOut, refreshProfile } = useAuth();
+  const { user, profile, isAdmin, isSuperAdmin, signOut, refreshProfile } = useAuth();
   const [showDetails, setShowDetails] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Fetch pending trainer request count — superadmin only
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    supabase
+      .from("trainer_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending")
+      .then(({ count }) => setPendingCount(count ?? 0));
+  }, [isSuperAdmin]);
 
   const avatarUrl: string | undefined =
     user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture;
@@ -256,6 +395,19 @@ export default function Navbar({ onBack }: Props) {
               className="px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
             >
               Fields
+            </Link>
+          )}
+          {isSuperAdmin && (
+            <Link
+              to="/admin/requests"
+              className="relative px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+            >
+              Requests
+              {pendingCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {pendingCount}
+                </span>
+              )}
             </Link>
           )}
 
@@ -336,6 +488,15 @@ export default function Navbar({ onBack }: Props) {
             profile={profile}
             userId={user.id}
             onRefresh={refreshProfile}
+          />
+        )}
+
+        {/* Become a Trainer — non-admin users only */}
+        {user && !isAdmin && (
+          <BecomeTrainerSection
+            userId={user.id}
+            userEmail={user.email ?? ""}
+            userName={user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? ""}
           />
         )}
 

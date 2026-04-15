@@ -7,7 +7,9 @@ import History from "./pages/History";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminRoute from "./components/auth/AdminRoute";
+import SuperAdminRoute from "./components/auth/SuperAdminRoute";
 import FieldConfigPage from "./pages/admin/FieldConfigPage";
+import TrainerRequestsPage from "./pages/admin/TrainerRequestsPage";
 import { calculateScore } from "./utils/calculateScore";
 import { supabase } from "./lib/supabase";
 import { useAuth } from "./context/AuthContext";
@@ -89,6 +91,14 @@ function App() {
           <AdminRoute>
             <FieldConfigPage />
           </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/requests"
+        element={
+          <SuperAdminRoute>
+            <TrainerRequestsPage />
+          </SuperAdminRoute>
         }
       />
     </Routes>

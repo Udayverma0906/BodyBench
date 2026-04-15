@@ -7,7 +7,8 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
-  isAdmin: boolean;
+  isAdmin: boolean;        // true for both admin and superadmin
+  isSuperAdmin: boolean;   // true only for superadmin (you)
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -61,7 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       session,
       user: session?.user ?? null,
       profile,
-      isAdmin: profile?.role === "admin",
+      isAdmin: profile?.role === "admin" || profile?.role === "superadmin",
+      isSuperAdmin: profile?.role === "superadmin",
       loading,
       signOut,
       refreshProfile,

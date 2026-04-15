@@ -16,7 +16,7 @@ export interface Assessment {
 
 export interface Profile {
   id: string;
-  role: "admin" | "user";
+  role: "superadmin" | "admin" | "user";
   admin_id: string | null;   // which admin manages this user; null = no admin
   join_code: string | null;  // admins only — short code clients enter to link themselves
   created_at: string;
@@ -48,6 +48,16 @@ export interface FieldConfig {
   visible: boolean;
   is_deleted: boolean;          // soft delete — row is never hard-deleted to preserve historical scoring
   sort_order: number;
+  created_at: string;
+}
+
+export interface TrainerRequest {
+  id: string;
+  user_id: string;
+  user_email: string | null;
+  user_name: string | null;
+  message: string | null;
+  status: "pending" | "approved" | "rejected";
   created_at: string;
 }
 
