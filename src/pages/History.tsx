@@ -16,35 +16,181 @@ const CATEGORY_STYLES: Record<string, { color: string; badge: string }> = {
 };
 const FALLBACK_STYLE = CATEGORY_STYLES["Good"];
 
-// ── Sparkline ─────────────────────────────────────────────────────────────────
+// ── Score Trend Chart ─────────────────────────────────────────────────────────
 
-function Sparkline({ scores }: { scores: number[] }) {
-  if (scores.length < 2) return null;
-  const W = 220, H = 52, pad = 6;
-  const min = Math.min(...scores);
-  const max = Math.max(...scores);
-  const range = max - min || 10;
-  const pts = scores
-    .map((s, i) => {
-      const x = pad + (i / (scores.length - 1)) * (W - pad * 2);
-      const y = H - pad - ((s - min) / range) * (H - pad * 2);
-      return `${x},${y}`;
-    })
-    .join(" ");
-  const lastScore = scores[scores.length - 1];
-  const lx = W - pad;
-  const ly = H - pad - ((lastScore - min) / range) * (H - pad * 2);
+function ScoreTrendChart({ assessments }: { assessments: Assessment[] }) {
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  const W = 560, H = 168;
+  const padL = 30, padR = 10, padT = 16, padB = 42;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const scores = assessments.map((a) => a.score);
+  const n = scores.length;
+
+  const toX = (i: number) =>
+    padL + (n === 1 ? chartW / 2 : (i / (n - 1)) * chartW);
+  const toY = (s: number) =>
+    padT + chartH - (s / 100) * chartH;
+
+  const points = scores.map((s, i) => ({ x: toX(i), y: toY(s) }));
+
+  // Smooth curve via catmull-rom → cubic bezier conversion
+  let linePath = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(n - 1, i + 2)];
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    linePath += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+  }
+
+  const areaPath =
+    linePath +
+    ` L ${points[n - 1].x.toFixed(2)} ${H - padB} L ${points[0].x.toFixed(2)} ${H - padB} Z`;
+
+  const gridYValues = [0, 25, 50, 75, 100];
+
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="overflow-visible">
-      <polyline
-        points={pts}
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="w-full"
+      style={{ height: 168 }}
+      aria-label="Score trend chart"
+    >
+      <defs>
+        <linearGradient id="scoreTrendGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#3b82f6" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.01" />
+        </linearGradient>
+      </defs>
+
+      {/* Grid lines + Y labels */}
+      {gridYValues.map((v) => {
+        const y = toY(v);
+        const isEdge = v === 0 || v === 100;
+        return (
+          <g key={v}>
+            <line
+              x1={padL} y1={y}
+              x2={W - padR} y2={y}
+              stroke="currentColor"
+              strokeOpacity={isEdge ? 0.12 : 0.07}
+              strokeWidth="1"
+              strokeDasharray={isEdge ? undefined : "3 4"}
+            />
+            <text
+              x={padL - 5} y={y + 4}
+              textAnchor="end"
+              fontSize="9"
+              className="fill-gray-400 dark:fill-gray-600"
+            >
+              {v}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Area fill */}
+      <path d={areaPath} fill="url(#scoreTrendGrad)" />
+
+      {/* Line */}
+      <path
+        d={linePath}
         fill="none"
+        stroke="#3b82f6"
         strokeWidth="2.5"
-        strokeLinejoin="round"
         strokeLinecap="round"
-        className="stroke-blue-500 dark:stroke-blue-400"
+        strokeLinejoin="round"
       />
-      <circle cx={lx} cy={ly} r="4" className="fill-blue-500 dark:fill-blue-400" />
+
+      {/* Dots, hit areas, tooltips */}
+      {points.map((p, i) => {
+        const isHovered = hovered === i;
+        // Clamp tooltip so it doesn't overflow left/right edges
+        const ttW = 36, ttH = 22;
+        const ttX = Math.max(padL, Math.min(p.x - ttW / 2, W - padR - ttW));
+        const ttY = p.y - ttH - 7;
+
+        return (
+          <g
+            key={i}
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            {/* Invisible large hit zone */}
+            <circle cx={p.x} cy={p.y} r={14} fill="transparent" style={{ cursor: "pointer" }} />
+
+            {/* Halo ring */}
+            {isHovered && (
+              <circle
+                cx={p.x} cy={p.y} r={8}
+                fill="none"
+                stroke="#3b82f6"
+                strokeOpacity="0.25"
+                strokeWidth="5"
+              />
+            )}
+
+            {/* Main dot */}
+            <circle
+              cx={p.x} cy={p.y}
+              r={isHovered ? 5 : 3.5}
+              fill="#3b82f6"
+              stroke="white"
+              strokeWidth="2"
+            />
+
+            {/* Tooltip */}
+            {isHovered && (
+              <>
+                <rect
+                  x={ttX} y={ttY}
+                  width={ttW} height={ttH}
+                  rx="5" ry="5"
+                  fill="#1d4ed8"
+                />
+                <text
+                  x={ttX + ttW / 2} y={ttY + 15}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fontWeight="bold"
+                  fill="white"
+                >
+                  {scores[i]}
+                </text>
+              </>
+            )}
+          </g>
+        );
+      })}
+
+      {/* X-axis date + time labels — smart density, two lines */}
+      {points.map((p, i) => {
+        const step = Math.ceil(n / 5);
+        const show = n <= 6 || i === 0 || i === n - 1 || i % step === 0;
+        if (!show) return null;
+        const d = new Date(assessments[i].taken_at);
+        const dateLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        const timeLabel = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+        return (
+          <text
+            key={i}
+            x={p.x} y={H - 22}
+            textAnchor="middle"
+            fontSize="9"
+            className="fill-gray-400 dark:fill-gray-500"
+          >
+            <tspan x={p.x} dy="0">{dateLabel}</tspan>
+            <tspan x={p.x} dy="12">{timeLabel}</tspan>
+          </text>
+        );
+      })}
     </svg>
   );
 }
@@ -55,6 +201,8 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
   year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
 });
 
 // ── Assessment card ───────────────────────────────────────────────────────────
@@ -131,8 +279,12 @@ export default function History() {
       });
   }, [user]);
 
-  // Oldest → newest for the sparkline
-  const chartScores = [...assessments].reverse().map((a) => a.score);
+  // Oldest → newest for the chart
+  const chartAssessments = [...assessments].reverse();
+
+  const latest = assessments[0]?.score;
+  const prev   = assessments[1]?.score;
+  const delta  = latest !== undefined && prev !== undefined ? latest - prev : null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -156,18 +308,36 @@ export default function History() {
         {/* Score trend card */}
         {!loading && assessments.length >= 2 && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-              Score Trend
-            </p>
-            <div className="flex items-end gap-6">
-              <Sparkline scores={chartScores} />
-              <div className="text-right shrink-0">
-                <p className="text-3xl font-extrabold text-gray-900 dark:text-white leading-none">
-                  {assessments[0].score}
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Latest</p>
+            {/* Card header */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Score Trend
+              </p>
+              <div className="flex items-center gap-2.5">
+                {delta !== null && (
+                  <span
+                    className={[
+                      "text-xs font-semibold px-2 py-0.5 rounded-full",
+                      delta >= 0
+                        ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
+                        : "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400",
+                    ].join(" ")}
+                  >
+                    {delta >= 0 ? "+" : ""}{delta} vs prev
+                  </span>
+                )}
+                <div className="text-right leading-none">
+                  <span className="text-2xl font-extrabold text-gray-900 dark:text-white">
+                    {latest}
+                  </span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 ml-0.5">
+                    / 100
+                  </span>
+                </div>
               </div>
             </div>
+
+            <ScoreTrendChart assessments={chartAssessments} />
           </div>
         )}
 
