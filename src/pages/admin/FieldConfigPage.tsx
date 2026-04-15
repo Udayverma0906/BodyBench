@@ -255,7 +255,26 @@ function FieldForm({
     <div className="max-h-[68vh] overflow-y-auto -mx-6 px-6 space-y-5 pb-1">
 
       {/* ── Identity ── */}
-      <div className="grid grid-cols-2 gap-4">
+      {isEdit ? (
+        <div className="grid grid-cols-2 gap-4">
+          <LabelWrap label="Label *" error={errors.label}>
+            <input
+              className={`${INPUT_CLS} ${errors.label ? INPUT_ERR : ""}`}
+              value={form.label}
+              onChange={e => setField("label", e.target.value)}
+              placeholder="e.g. Push-ups"
+            />
+          </LabelWrap>
+          <LabelWrap label="Field Key" hint="Locked after creation">
+            <input
+              className={`${INPUT_CLS} font-mono text-xs opacity-50 cursor-not-allowed`}
+              value={form.field_key}
+              readOnly
+              tabIndex={-1}
+            />
+          </LabelWrap>
+        </div>
+      ) : (
         <LabelWrap label="Label *" error={errors.label}>
           <input
             className={`${INPUT_CLS} ${errors.label ? INPUT_ERR : ""}`}
@@ -264,20 +283,7 @@ function FieldForm({
             placeholder="e.g. Push-ups"
           />
         </LabelWrap>
-        <LabelWrap
-          label="Field Key *"
-          error={errors.field_key}
-          hint={isEdit ? "Locked after creation" : "Auto-filled from label"}
-        >
-          <input
-            className={`${INPUT_CLS} font-mono text-xs ${errors.field_key ? INPUT_ERR : ""} ${isEdit ? "opacity-50 cursor-not-allowed" : ""}`}
-            value={form.field_key}
-            onChange={e => !isEdit && setField("field_key", e.target.value)}
-            readOnly={isEdit}
-            placeholder="e.g. pushups"
-          />
-        </LabelWrap>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <LabelWrap label="Section *" error={errors.section} hint={SECTION_HINT[form.section]}>
@@ -685,10 +691,6 @@ export default function FieldConfigPage() {
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm(prev => {
       const next = { ...prev, [key]: value };
-      // Auto-slugify field_key from label only in add mode
-      if (key === "label" && !editingId) {
-        next.field_key = slugify(value as string);
-      }
       // Reset tiers to section defaults when section changes in add mode
       if (key === "section" && !editingId) {
         next.tiers = [...DEFAULT_TIERS[value as FieldConfig["section"]]];
@@ -722,9 +724,8 @@ export default function FieldConfigPage() {
   function validate(): boolean {
     const errs: FormErrors = {};
     if (!form.label.trim())   errs.label = "Required";
-    if (!form.field_key.trim()) errs.field_key = "Required";
-    else if (!/^[a-z][a-z0-9_]*$/.test(form.field_key))
-      errs.field_key = "Lowercase letters, digits, underscores only — must start with a letter";
+    // field_key is auto-generated on insert; only validate it in edit mode
+    if (editingId && !form.field_key.trim()) errs.field_key = "Required";
     if (form.tiers.length === 0) {
       errs.tiers = "At least one scoring tier is required";
     } else if (form.tiers.some(t => t.threshold === "" || t.points === "" || isNaN(Number(t.threshold)) || isNaN(Number(t.points)))) {
@@ -744,7 +745,9 @@ export default function FieldConfigPage() {
     const payload = {
       admin_id:        user.id,
       label:           form.label.trim(),
-      field_key:       form.field_key.trim(),
+      field_key:       editingId
+                         ? form.field_key.trim()
+                         : `${slugify(form.label.trim())}_${Date.now().toString(36)}`,
       section:         form.section,
       field_type:      "number" as const,
       description:     form.description.trim() || null,
@@ -778,10 +781,7 @@ export default function FieldConfigPage() {
         .from("field_configs")
         .insert(payload);
       if (error) {
-        const msg = error.code === "23505"
-          ? `Field key "${form.field_key}" already exists. Choose a different key.`
-          : error.message;
-        setFormErrors({ _save: msg });
+        setFormErrors({ _save: error.message });
         setSaving(false);
         return;
       }
