@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import BasePopup from "../ui/BasePopup";
+import { supabase } from "../../lib/supabase";
+import type { Profile } from "../../types/database";
 
 // ── Update these two constants with your own links ──────────────────────────
 const LINKEDIN_URL = "https://www.linkedin.com/in/uday-verma0906/";
@@ -71,9 +73,131 @@ function ExternalLinkIcon() {
   );
 }
 
+// ── TrainerSection — shown inside the profile popup for non-admin users ────────
+
+function TrainerSection({ profile, userId, onRefresh }: {
+  profile: Profile | null;
+  userId: string;
+  onRefresh: () => Promise<void>;
+}) {
+  const [code, setCode]           = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+
+  const join = async () => {
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) return;
+    setLoading(true);
+    setError(null);
+
+    const { data, error: queryErr } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("join_code", trimmed)
+      .eq("role", "admin")
+      .single();
+
+    if (queryErr || !data) {
+      setError("Code not found. Check with your trainer.");
+      setLoading(false);
+      return;
+    }
+
+    const { error: updateErr } = await supabase
+      .from("profiles")
+      .update({ admin_id: data.id })
+      .eq("id", userId);
+
+    if (updateErr) {
+      setError("Failed to join. Please try again.");
+    } else {
+      setCode("");
+      await onRefresh();
+    }
+    setLoading(false);
+  };
+
+  const leave = async () => {
+    setLoading(true);
+    const { error: updateErr } = await supabase
+      .from("profiles")
+      .update({ admin_id: null })
+      .eq("id", userId);
+    if (!updateErr) await onRefresh();
+    setLoading(false);
+    setConfirming(false);
+  };
+
+  // ── Connected state ────────────────────────────────────────────────────────
+  if (profile?.admin_id) {
+    return (
+      <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-1 mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Trainer</p>
+            <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Connected ✓</p>
+          </div>
+          {confirming ? (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setConfirming(false)}
+                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={leave}
+                disabled={loading}
+                className="text-xs font-medium text-red-500 hover:text-red-700 transition"
+              >
+                {loading ? "…" : "Leave"}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirming(true)}
+              className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition"
+            >
+              Leave trainer
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Join state ─────────────────────────────────────────────────────────────
+  return (
+    <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-1 mb-4">
+      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Join a Trainer</p>
+      <div className="flex gap-2">
+        <input
+          value={code}
+          onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(null); }}
+          onKeyDown={(e) => e.key === "Enter" && join()}
+          placeholder="Enter code"
+          maxLength={8}
+          className="flex-1 px-3 py-1.5 text-sm font-mono rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+        />
+        <button
+          onClick={join}
+          disabled={loading || !code.trim()}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white transition"
+        >
+          {loading ? "…" : "Join"}
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-500 dark:text-red-400 mt-1.5">{error}</p>}
+    </div>
+  );
+}
+
+// ── Navbar ─────────────────────────────────────────────────────────────────────
+
 export default function Navbar({ onBack }: Props) {
   const { theme, toggle } = useTheme();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, profile, isAdmin, signOut, refreshProfile } = useAuth();
   const [showDetails, setShowDetails] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
@@ -205,6 +329,15 @@ export default function Navbar({ onBack }: Props) {
             )}
           </div>
         </div>
+
+        {/* Trainer section — non-admin users only */}
+        {user && !isAdmin && (
+          <TrainerSection
+            profile={profile}
+            userId={user.id}
+            onRefresh={refreshProfile}
+          />
+        )}
 
         <button
           onClick={() => setShowSignOutConfirm(true)}

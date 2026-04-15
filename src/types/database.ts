@@ -17,7 +17,8 @@ export interface Assessment {
 export interface Profile {
   id: string;
   role: "admin" | "user";
-  admin_id: string | null;  // which admin manages this user; null = no admin
+  admin_id: string | null;   // which admin manages this user; null = no admin
+  join_code: string | null;  // admins only — short code clients enter to link themselves
   created_at: string;
 }
 
@@ -63,7 +64,7 @@ export interface Database {
       profiles: {
         Row: Profile;
         Insert: Omit<Profile, "created_at">;
-        Update: Partial<Pick<Profile, "admin_id">>;  // role changes via Supabase dashboard only
+        Update: Partial<Pick<Profile, "admin_id" | "join_code">>;  // role changes via Supabase dashboard only
       };
       field_configs: {
         Row: FieldConfig;

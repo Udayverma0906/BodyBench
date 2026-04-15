@@ -444,6 +444,115 @@ function FieldForm({
   );
 }
 
+// ── JoinCodeCard ──────────────────────────────────────────────────────────────
+
+function makeCode(): string {
+  // Excludes visually ambiguous characters (I, O, 0, 1)
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
+
+function JoinCodeCard({ userId }: { userId: string }) {
+  const [code, setCode]           = useState<string | null>(null);
+  const [codeLoading, setCodeLoading] = useState(true);
+  const [working, setWorking]     = useState(false);
+  const [copied, setCopied]       = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    supabase.from("profiles").select("join_code").eq("id", userId).single()
+      .then(({ data }) => {
+        if (!active) return;
+        setCode(data?.join_code ?? null);
+        setCodeLoading(false);
+      });
+    return () => { active = false; };
+  }, [userId]);
+
+  // Generates a new code and saves it, retrying up to 5 times on a unique
+  // constraint collision (error code 23505). Each attempt picks a fresh random
+  // code so the retry is genuinely independent.
+  const generateAndSave = async () => {
+    setWorking(true);
+    setCodeError(null);
+    const MAX_ATTEMPTS = 5;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const candidate = makeCode();
+      const { error } = await supabase
+        .from("profiles")
+        .update({ join_code: candidate })
+        .eq("id", userId);
+      if (!error) {
+        setCode(candidate);
+        setWorking(false);
+        return;
+      }
+      if (error.code !== "23505") {
+        // Non-collision error — no point retrying
+        setCodeError("Failed to save code. Please try again.");
+        break;
+      }
+      // error.code === "23505" → collision, loop and try a new code
+    }
+    setWorking(false);
+  };
+
+  const copy = async () => {
+    if (!code) return;
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+      <div className="mb-4">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Your Join Code</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          Share this with clients so they can link to your fields.
+        </p>
+      </div>
+
+      {codeLoading ? (
+        <div className="h-10 w-48 bg-gray-100 dark:bg-gray-700 animate-pulse rounded-xl" />
+      ) : code ? (
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="font-mono text-2xl font-bold tracking-[0.25em] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-4 py-2 rounded-xl select-all">
+            {code}
+          </span>
+          <button
+            onClick={copy}
+            disabled={working}
+            className="px-3 py-2 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+          >
+            {copied ? "Copied!" : "Copy"}
+          </button>
+          <button
+            onClick={generateAndSave}
+            disabled={working}
+            className="px-3 py-2 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+          >
+            {working ? "…" : "Regenerate"}
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={generateAndSave}
+          disabled={working}
+          className="px-4 py-2 text-sm font-medium rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
+        >
+          {working ? "Generating…" : "Generate Code"}
+        </button>
+      )}
+
+      {codeError && (
+        <p className="text-xs text-red-500 dark:text-red-400 mt-3">{codeError}</p>
+      )}
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function FieldConfigPage() {
@@ -689,6 +798,9 @@ export default function FieldConfigPage() {
             + Add Field
           </button>
         </div>
+
+        {/* Join code — lets clients link to this admin's fields */}
+        {user && <JoinCodeCard userId={user.id} />}
 
         {loading ? (
           <div className="flex justify-center py-24">

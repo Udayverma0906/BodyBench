@@ -10,6 +10,7 @@ interface AuthContextValue {
   isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -51,6 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const refreshProfile = async () => {
+    if (session?.user) await fetchProfile(session.user.id);
+  };
+
   return (
     <AuthContext.Provider value={{
       session,
@@ -59,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAdmin: profile?.role === "admin",
       loading,
       signOut,
+      refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>
