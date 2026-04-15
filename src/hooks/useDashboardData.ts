@@ -14,6 +14,8 @@ export interface DashboardData {
   avgScore: number | null;
   /** Oldest → newest, ready for TrendWidget */
   scoreTimeSeries: TimeSeriesPoint[];
+  /** BMI over time — only includes assessments that had weight + height (oldest → newest) */
+  bmiTimeSeries: TimeSeriesPoint[];
   /** Distribution of category labels (Excellent, Good, …) */
   categoryDistribution: CategoryPoint[];
   /** Average score per breakdown metric across all assessments */
@@ -27,6 +29,7 @@ const EMPTY: DashboardData = {
   bestScore: null,
   avgScore: null,
   scoreTimeSeries: [],
+  bmiTimeSeries: [],
   categoryDistribution: [],
   avgBreakdown: [],
 };
@@ -88,6 +91,14 @@ export function useDashboardData(userId: string): DashboardData {
           ([label, value]) => ({ label, value, max: rows.length })
         );
 
+        // ── BMI time series ───────────────────────────────────────────────
+        const bmiTimeSeries: TimeSeriesPoint[] = rows.flatMap(r => {
+          const w = r.form_data?.weight;
+          const h = r.form_data?.height;
+          if (!w || !h || h < 50) return [];
+          return [{ value: w / Math.pow(h / 100, 2), timestamp: r.taken_at }];
+        });
+
         // ── Average breakdown by metric ───────────────────────────────────
         // Accumulate earned + max per label across all assessments
         const metricAcc: Record<string, { totalEarned: number; totalMax: number; count: number }> = {};
@@ -116,6 +127,7 @@ export function useDashboardData(userId: string): DashboardData {
           bestScore,
           avgScore,
           scoreTimeSeries,
+          bmiTimeSeries,
           categoryDistribution,
           avgBreakdown,
         });

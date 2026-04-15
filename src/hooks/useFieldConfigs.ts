@@ -34,15 +34,14 @@ export function useFieldConfigs(adminId?: string | null): UseFieldConfigsResult 
       let adminFields: FieldConfig[] = [];
 
       // ── 1. Admin-specific fields ───────────────────────────────────────────
-      // Fetch ALL non-deleted admin fields (including hidden ones) so that
-      // hidden field_keys are still present in adminKeys and correctly block
-      // the global-defaults fallback from re-adding them.
+      // Fetch ALL admin fields (including deleted and hidden) so their
+      // field_keys are present in adminKeys and block global defaults from
+      // re-appearing for fields the admin has hidden OR deleted.
       if (adminId) {
         const { data, error: err } = await supabase
           .from("field_configs")
           .select("*")
           .eq("admin_id", adminId)
-          .eq("is_deleted", false)
           .order("section")
           .order("sort_order");
 
@@ -82,12 +81,12 @@ export function useFieldConfigs(adminId?: string | null): UseFieldConfigsResult 
           : DEFAULT_FIELD_CONFIGS;
 
       // ── 3. Merge: admin fields override globals by field_key ───────────────
-      // adminKeys covers ALL non-deleted admin fields (visible or hidden) so
-      // that a hidden admin field blocks the global default from re-appearing.
-      // Only visible admin fields are included in the merged output.
+      // adminKeys covers ALL admin fields (including deleted + hidden) so that
+      // a deleted or hidden admin field blocks the global default from
+      // re-appearing. Only non-deleted visible admin fields go into the output.
       const adminKeys = new Set(adminFields.map(f => f.field_key));
       const merged = [
-        ...adminFields.filter(f => f.visible),
+        ...adminFields.filter(f => !f.is_deleted && f.visible),
         ...globalFields.filter(f => !adminKeys.has(f.field_key)),
       ];
 

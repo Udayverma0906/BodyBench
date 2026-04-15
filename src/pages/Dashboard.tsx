@@ -20,6 +20,9 @@ export default function Dashboard() {
       ? latestScore - prevScore
       : null;
 
+  const bmiSeries = data.bmiTimeSeries;
+  const latestBmi = bmiSeries.length > 0 ? bmiSeries[bmiSeries.length - 1].value : null;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Navbar />
@@ -101,7 +104,21 @@ export default function Dashboard() {
             colSpan={4}
           />
 
-          {/* ── Row 3: breakdown bar chart ──────────────────────────────── */}
+          {/* ── Row 3: BMI trend ───────────────────────────────────────── */}
+
+          {!loading && bmiSeries.length > 0 && (
+            <TrendWidget
+              title="BMI Trend"
+              subtitle={`Body Mass Index over time · Latest: ${latestBmi!.toFixed(1)}`}
+              loading={loading}
+              data={bmiSeries}
+              color="#22c55e"
+              valueFormatter={v => v.toFixed(1)}
+              colSpan={4}
+            />
+          )}
+
+          {/* ── Row 4: breakdown bar chart ──────────────────────────────── */}
 
           <BarWidget
             title="Avg Score by Metric"

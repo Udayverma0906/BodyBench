@@ -42,6 +42,7 @@ function App() {
         score: res.total,
         category: res.category,
         breakdown: res.breakdown,
+        formData: data,
       },
     });
   };

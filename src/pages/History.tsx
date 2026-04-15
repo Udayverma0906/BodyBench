@@ -19,6 +19,25 @@ const CATEGORY_STYLES: Record<string, { color: string; badge: string }> = {
 };
 const FALLBACK_STYLE = CATEGORY_STYLES["Good"];
 
+// ── BMI helpers ───────────────────────────────────────────────────────────────
+
+const BMI_LEVELS: { max: number; label: string; badge: string }[] = [
+  { max: 18.5, label: "Underweight",    badge: "bg-blue-100   dark:bg-blue-950   text-blue-700   dark:text-blue-400"   },
+  { max: 25,   label: "Normal",         badge: "bg-green-100  dark:bg-green-950  text-green-700  dark:text-green-400"  },
+  { max: 30,   label: "Overweight",     badge: "bg-amber-100  dark:bg-amber-950  text-amber-700  dark:text-amber-400"  },
+  { max: 35,   label: "Obese I",        badge: "bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400" },
+  { max: Infinity, label: "Obese II+",  badge: "bg-red-100    dark:bg-red-950    text-red-700    dark:text-red-400"    },
+];
+
+function calcBmi(weight?: number, height?: number) {
+  if (!weight || !height || height < 50) return null;
+  return weight / Math.pow(height / 100, 2);
+}
+
+function getBmiLevel(bmi: number) {
+  return BMI_LEVELS.find(l => bmi < l.max) ?? BMI_LEVELS[BMI_LEVELS.length - 1];
+}
+
 // ── Date formatter ────────────────────────────────────────────────────────────
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
@@ -64,6 +83,8 @@ function AssessmentCard({
   const [showConfirm, setShowConfirm] = useState(false);
   const style = CATEGORY_STYLES[a.category] ?? FALLBACK_STYLE;
   const breakdown = a.breakdown as ScoreBreakdown[];
+  const bmi = calcBmi(a.form_data?.weight, a.form_data?.height);
+  const bmiLevel = bmi !== null ? getBmiLevel(bmi) : null;
 
   return (
     <>
@@ -96,6 +117,19 @@ function AssessmentCard({
               <TrashIcon />
             </button>
           </div>
+
+          {/* BMI pill */}
+          {bmi !== null && bmiLevel !== null && (
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs text-gray-400 dark:text-gray-500">BMI</span>
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                {bmi.toFixed(1)}
+              </span>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${bmiLevel.badge}`}>
+                {bmiLevel.label}
+              </span>
+            </div>
+          )}
 
           {/* Breakdown bars */}
           <div className="space-y-2">
