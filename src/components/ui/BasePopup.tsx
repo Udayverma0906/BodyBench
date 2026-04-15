@@ -6,7 +6,7 @@ interface Props {
   title?: string;
   children: React.ReactNode;
   /** Controls max width of the card. Default: "sm" */
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 function CloseIcon() {
@@ -41,7 +41,7 @@ function CloseIcon() {
  *   - Smooth fade + scale transition
  *   - Locks body scroll while open
  */
-const SIZE_CLASS = { sm: "max-w-sm", md: "max-w-md", lg: "max-w-lg" };
+const SIZE_CLASS = { sm: "max-w-sm", md: "max-w-md", lg: "max-w-lg", xl: "max-w-xl" };
 
 export default function BasePopup({ isOpen, onClose, title, children, size = "sm" }: Props) {
   // Close on Escape key

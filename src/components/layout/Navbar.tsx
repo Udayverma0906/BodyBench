@@ -73,7 +73,7 @@ function ExternalLinkIcon() {
 
 export default function Navbar({ onBack }: Props) {
   const { theme, toggle } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const [showDetails, setShowDetails] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
@@ -124,6 +124,14 @@ export default function Navbar({ onBack }: Props) {
               className="px-3 py-1.5 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
             >
               History
+            </Link>
+          )}
+          {isAdmin && (
+            <Link
+              to="/admin/fields"
+              className="px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+            >
+              Fields
             </Link>
           )}
 
