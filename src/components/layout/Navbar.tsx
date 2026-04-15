@@ -7,7 +7,7 @@ import BasePopup from "../ui/BasePopup";
 // ── Update these two constants with your own links ──────────────────────────
 const LINKEDIN_URL = "https://www.linkedin.com/in/uday-verma0906/";
 const GITHUB_URL   = "https://github.com/Udayverma0906/BodyBench";
-const APP_VERSION  = "1.3.1";
+const APP_VERSION  = "1.4.0";
 // ────────────────────────────────────────────────────────────────────────────
 
 interface Props {

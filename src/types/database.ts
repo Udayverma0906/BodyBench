@@ -11,6 +11,7 @@ export interface Assessment {
   breakdown: ScoreBreakdown[];
   form_data: AssessmentForm;
   taken_at: string;
+  is_active: boolean;
 }
 
 export interface FieldConfig {
@@ -37,7 +38,7 @@ export interface Database {
       assessments: {
         Row: Assessment;
         Insert: Omit<Assessment, "id" | "taken_at">;
-        Update: Partial<Omit<Assessment, "id" | "user_id" | "taken_at">>;
+        Update: Partial<Omit<Assessment, "id" | "user_id" | "taken_at">> & { is_active?: boolean };
       };
       field_configs: {
         Row: FieldConfig;

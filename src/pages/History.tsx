@@ -4,6 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import Navbar from "../components/layout/Navbar";
 import TrendChart from "../components/ui/TrendChart";
+import BasePopup from "../components/ui/BasePopup";
+import DeletedAssessmentsPanel from "../components/assessments/DeletedAssessmentsPanel";
 import type { Assessment } from "../types/database";
 import type { ScoreBreakdown } from "../utils/calculateScore";
 
@@ -27,56 +29,128 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
+// ── Trash icon ────────────────────────────────────────────────────────────────
+
+function TrashIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+  );
+}
+
 // ── Assessment card ───────────────────────────────────────────────────────────
 
-function AssessmentCard({ a }: { a: Assessment }) {
+function AssessmentCard({
+  a,
+  onDelete,
+}: {
+  a: Assessment;
+  onDelete: (id: string) => void;
+}) {
+  const [showConfirm, setShowConfirm] = useState(false);
   const style = CATEGORY_STYLES[a.category] ?? FALLBACK_STYLE;
   const breakdown = a.breakdown as ScoreBreakdown[];
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 flex gap-5 items-start">
-      {/* Score circle */}
-      <div className="shrink-0 flex flex-col items-center gap-1.5">
-        <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${style.color} border-current`}>
-          <span className="text-xl font-extrabold text-gray-900 dark:text-white leading-none">
-            {a.score}
+    <>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 flex gap-5 items-start group">
+        {/* Score circle */}
+        <div className="shrink-0 flex flex-col items-center gap-1.5">
+          <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${style.color} border-current`}>
+            <span className="text-xl font-extrabold text-gray-900 dark:text-white leading-none">
+              {a.score}
+            </span>
+          </div>
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${style.badge}`}>
+            {a.category}
           </span>
         </div>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${style.badge}`}>
-          {a.category}
-        </span>
-      </div>
 
-      {/* Details */}
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
-          {dateFmt.format(new Date(a.taken_at))}
-        </p>
+        {/* Details */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              {dateFmt.format(new Date(a.taken_at))}
+            </p>
 
-        {/* Breakdown bars */}
-        <div className="space-y-2">
-          {breakdown.map(({ label, score: s, max }) => {
-            const pct = Math.round((s / max) * 100);
-            return (
-              <div key={label}>
-                <div className="flex justify-between text-xs mb-0.5">
-                  <span className="text-gray-500 dark:text-gray-400">{label}</span>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">
-                    {s}<span className="text-gray-400">/{max}</span>
-                  </span>
+            {/* Delete button — always visible on mobile, fades in on hover for desktop */}
+            <button
+              onClick={() => setShowConfirm(true)}
+              aria-label="Delete assessment"
+              className="p-1.5 rounded-lg text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+            >
+              <TrashIcon />
+            </button>
+          </div>
+
+          {/* Breakdown bars */}
+          <div className="space-y-2">
+            {breakdown.map(({ label, score: s, max }) => {
+              const pct = Math.round((s / max) * 100);
+              return (
+                <div key={label}>
+                  <div className="flex justify-between text-xs mb-0.5">
+                    <span className="text-gray-500 dark:text-gray-400">{label}</span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                      {s}<span className="text-gray-400">/{max}</span>
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-1.5 bg-blue-500 rounded-full"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-1.5 bg-blue-500 rounded-full"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Delete confirmation popup */}
+      <BasePopup
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        title="Remove Assessment"
+      >
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          This assessment will be removed from your history and trend graph.
+          You can't undo this action.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowConfirm(false)}
+            className="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              setShowConfirm(false);
+              onDelete(a.id);
+            }}
+            className="flex-1 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition"
+          >
+            Remove
+          </button>
+        </div>
+      </BasePopup>
+    </>
   );
 }
 
@@ -87,6 +161,7 @@ export default function History() {
   const navigate = useNavigate();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleted, setShowDeleted] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -94,12 +169,41 @@ export default function History() {
       .from("assessments")
       .select("*")
       .eq("user_id", user.id)
+      .eq("is_active", true)          // only active (non-deleted) rows
       .order("taken_at", { ascending: false })
       .then(({ data, error }) => {
         if (!error && data) setAssessments(data as Assessment[]);
         setLoading(false);
       });
   }, [user]);
+
+  // Soft-delete: flip is_active → false, then remove from local state
+  const handleDelete = async (id: string) => {
+    const { error, count } = await supabase
+      .from("assessments")
+      .update({ is_active: false }, { count: "exact" })
+      .eq("id", id)
+      .eq("user_id", user!.id);   // belt-and-suspenders: ensures RLS matches
+
+    if (error) {
+      console.error("[handleDelete] Supabase error:", error);
+      return;
+    }
+    if (count === 0) {
+      console.warn("[handleDelete] Update ran but 0 rows changed — check RLS UPDATE policy on assessments table.");
+      return;
+    }
+    setAssessments((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  // Re-insert a restored assessment in date-descending order
+  const handleRestored = (restored: Assessment) => {
+    setAssessments((prev) =>
+      [...prev, restored].sort(
+        (a, b) => new Date(b.taken_at).getTime() - new Date(a.taken_at).getTime()
+      )
+    );
+  };
 
   // Map to TrendChart's data format (oldest → newest)
   const chartData = [...assessments]
@@ -121,12 +225,20 @@ export default function History() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Assessment History
           </h1>
-          <button
-            onClick={() => navigate("/assessment")}
-            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition"
-          >
-            New Assessment
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowDeleted(true)}
+              className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-semibold transition"
+            >
+              Deleted
+            </button>
+            <button
+              onClick={() => navigate("/assessment")}
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition"
+            >
+              New Assessment
+            </button>
+          </div>
         </div>
 
         {/* Score trend card */}
@@ -181,12 +293,20 @@ export default function History() {
         ) : (
           <div className="space-y-4">
             {assessments.map((a) => (
-              <AssessmentCard key={a.id} a={a} />
+              <AssessmentCard key={a.id} a={a} onDelete={handleDelete} />
             ))}
           </div>
         )}
 
       </div>
+
+      {/* Deleted assessments panel */}
+      <DeletedAssessmentsPanel
+        isOpen={showDeleted}
+        onClose={() => setShowDeleted(false)}
+        userId={user!.id}
+        onRestored={handleRestored}
+      />
     </div>
   );
 }
