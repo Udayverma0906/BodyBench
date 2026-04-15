@@ -4,6 +4,7 @@ interface Props {
   onChange: (value: number | null) => void;
   error?: string;
   min?: number;
+  max?: number;
   step?: number;
   placeholder?: string;
 }
@@ -13,7 +14,8 @@ export default function InputField({
   value,
   onChange,
   error,
-  min = 0,
+  min,
+  max,
   step = 1,
   placeholder,
 }: Props) {
@@ -27,6 +29,7 @@ export default function InputField({
         type="number"
         value={value ?? ""}
         min={min}
+        max={max}
         step={step}
         placeholder={placeholder}
         onChange={(e) => {

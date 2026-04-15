@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c \"cd \\\\\"C:\\\\Users\\\\uday.verma\\\\Desktop\\\\New Start\\\\BodyBench\\\\\" && npx tsc --noEmit 2>&1\")",
+      "Bash(cmd /c \"cd \\\\\"C:\\\\Users\\\\uday.verma\\\\Desktop\\\\New Start\\\\BodyBench\\\\\" && npx tsc --noEmit\")",
+      "Bash(cmd /c \"cd \\\\\"C:\\\\Users\\\\uday.verma\\\\Desktop\\\\New Start\\\\BodyBench\\\\\" && node node_modules\\\\typescript\\\\bin\\\\tsc --noEmit 2>&1\")",
+      "Bash(cmd /c \"cd \\\\\"C:\\\\Users\\\\uday.verma\\\\Desktop\\\\New Start\\\\BodyBench\\\\\" && node node_modules/typescript/bin/tsc --noEmit\")"
+    ]
+  }
+}

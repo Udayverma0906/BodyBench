@@ -12,13 +12,14 @@ import { calculateScore } from "./utils/calculateScore";
 import { supabase } from "./lib/supabase";
 import { useAuth } from "./context/AuthContext";
 import type { AssessmentForm } from "./types/assessment";
+import type { FieldConfig } from "./types/database";
 
 function App() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const handleSubmit = (data: AssessmentForm) => {
-    const res = calculateScore(data);
+  const handleSubmit = (data: AssessmentForm, configs: FieldConfig[]) => {
+    const res = calculateScore(data, configs);
 
     // Fire-and-forget: save to DB if logged in
     if (user) {

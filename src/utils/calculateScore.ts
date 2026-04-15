@@ -1,4 +1,5 @@
 import type { AssessmentForm } from "../types/assessment";
+import type { FieldConfig } from "../types/database";
 
 const REFERENCE_WEIGHT_KG = 70;
 
@@ -14,6 +15,7 @@ interface MetricConfig {
  * Walk tiers in declaration order and return points for the first match.
  * - lowerIsBetter: match when value <= threshold  (tiers: low → high)
  * - default:       match when value >= threshold  (tiers: high → low)
+ * Falls back to the last tier's points when nothing matched.
  */
 function pickTier(value: number, { tiers, lowerIsBetter = false }: MetricConfig): number {
   for (const tier of tiers) {
@@ -24,7 +26,7 @@ function pickTier(value: number, { tiers, lowerIsBetter = false }: MetricConfig)
   return tiers[tiers.length - 1].points;
 }
 
-// ─── Scoring config ───────────────────────────────────────────────────────────
+// ─── Hardcoded scoring config (used when no fieldConfigs supplied) ─────────────
 
 const SCORING: Record<string, MetricConfig> = {
   jogTime: {
@@ -95,6 +97,9 @@ const SCORING: Record<string, MetricConfig> = {
   },
 };
 
+// Hardcoded field keys that get weight-adjusted in the fallback path.
+const HARDCODED_STRENGTH_KEYS = new Set(["pushups", "pullups", "squats"]);
+
 const CATEGORIES: { min: number; label: string }[] = [
   { min: 81, label: "Excellent"          },
   { min: 61, label: "Good"               },
@@ -112,62 +117,90 @@ export interface ScoreBreakdown {
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export function calculateScore(data: AssessmentForm): {
+/**
+ * @param data        — form values keyed by field_key (or the hardcoded keys)
+ * @param fieldConfigs — visible, non-deleted FieldConfig rows from the DB.
+ *                       When provided (and non-empty) dynamic tiers are used;
+ *                       when omitted or empty the hardcoded SCORING is the fallback.
+ */
+export function calculateScore(
+  data: AssessmentForm,
+  fieldConfigs?: FieldConfig[]
+): {
   total: number;
   category: string;
   breakdown: ScoreBreakdown[];
 } {
-  // Use provided weight for strength scaling, else reference body weight.
   const weightFactor = data.weight ? data.weight / REFERENCE_WEIGHT_KG : 1;
 
-  // Build a list of metrics that actually have a value supplied.
-  type RawMetric = { label: string; earned: number; max: number } | null;
+  type RawMetric = { label: string; earned: number; max: number };
 
-  const raw: RawMetric[] = [
-    data.jogTime  !== undefined
-      ? { label: "Endurance",   earned: pickTier(data.jogTime, SCORING.jogTime), max: 25 }
-      : null,
-    data.pushups  !== undefined
-      ? { label: "Push-ups",    earned: pickTier(Math.round(data.pushups * weightFactor), SCORING.pushups), max: 20 }
-      : null,
-    data.pullups  !== undefined
-      ? { label: "Pull-ups",    earned: pickTier(Math.round(data.pullups * weightFactor), SCORING.pullups), max: 20 }
-      : null,
-    data.squats   !== undefined
-      ? { label: "Squats",      earned: pickTier(Math.round(data.squats  * weightFactor), SCORING.squats),  max: 15 }
-      : null,
-    data.plank    !== undefined
-      ? { label: "Plank",       earned: pickTier(data.plank, SCORING.plank), max: 20 }
-      : null,
-    data.situps   !== undefined
-      ? { label: "Sit-ups",     earned: pickTier(data.situps, SCORING.situps), max: 15 }
-      : null,
-    data.flexibility !== undefined
-      ? { label: "Flexibility", earned: pickTier(data.flexibility, SCORING.flexibility), max: 15 }
-      : null,
-    data.restingHR !== undefined
-      ? { label: "Recovery",    earned: pickTier(data.restingHR, SCORING.restingHR), max: 15 }
-      : null,
-    data.age      !== undefined
-      ? { label: "Age Bonus",   earned: pickTier(data.age, SCORING.age), max: 15 }
-      : null,
-  ];
+  // ── Dynamic path (DB-configured fields) ────────────────────────────────────
+  if (fieldConfigs && fieldConfigs.length > 0) {
+    const metrics: RawMetric[] = [];
 
-  const metrics = raw.filter((m): m is NonNullable<RawMetric> => m !== null);
+    for (const cfg of fieldConfigs) {
+      const rawVal = data[cfg.field_key];
+      if (rawVal === undefined) continue;
+      if (cfg.max_points <= 0) continue;   // field contributes nothing to score
 
+      // Strength fields are weight-adjusted; all other sections are raw.
+      const value =
+        cfg.section === "strength" && data.weight
+          ? Math.round(rawVal * weightFactor)
+          : rawVal;
+
+      metrics.push({
+        label:  cfg.label,
+        earned: pickTier(value, { tiers: cfg.scoring_tiers, lowerIsBetter: cfg.lower_is_better }),
+        max:    cfg.max_points,
+      });
+    }
+
+    const totalEarned = metrics.reduce((sum, m) => sum + m.earned, 0);
+    const totalMax    = metrics.reduce((sum, m) => sum + m.max,    0);
+    const total       = totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : 0;
+    const category    = CATEGORIES.find((c) => total >= c.min)?.label ?? "Needs Improvement";
+    const breakdown   = metrics.map((m) => ({ label: m.label, score: m.earned, max: m.max }));
+
+    return { total, category, breakdown };
+  }
+
+  // ── Hardcoded fallback ──────────────────────────────────────────────────────
+  const HARDCODED_LABELS: Record<string, string> = {
+    jogTime:     "Endurance",
+    pushups:     "Push-ups",
+    pullups:     "Pull-ups",
+    squats:      "Squats",
+    plank:       "Plank",
+    situps:      "Sit-ups",
+    flexibility: "Flexibility",
+    restingHR:   "Recovery",
+    age:         "Age Bonus",
+  };
+
+  const raw: (RawMetric | null)[] = Object.entries(SCORING).map(([key, cfg]) => {
+    const rawVal = data[key];
+    if (rawVal === undefined) return null;
+
+    const value = HARDCODED_STRENGTH_KEYS.has(key) && data.weight
+      ? Math.round(rawVal * weightFactor)
+      : rawVal;
+
+    return {
+      label:  HARDCODED_LABELS[key] ?? key,
+      earned: pickTier(value, cfg),
+      max:    Math.max(...cfg.tiers.filter((t) => isFinite(t.threshold)).map((t) => t.points),
+                       cfg.tiers[0].points),
+    };
+  });
+
+  const metrics = raw.filter((m): m is RawMetric => m !== null);
   const totalEarned = metrics.reduce((sum, m) => sum + m.earned, 0);
   const totalMax    = metrics.reduce((sum, m) => sum + m.max,    0);
-
-  // Normalize to 100 so the score is always comparable regardless of which
-  // optional fields were filled in.
-  const total    = totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : 0;
-  const category = CATEGORIES.find((c) => total >= c.min)?.label ?? "Needs Improvement";
-
-  const breakdown: ScoreBreakdown[] = metrics.map((m) => ({
-    label: m.label,
-    score: m.earned,
-    max:   m.max,
-  }));
+  const total       = totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : 0;
+  const category    = CATEGORIES.find((c) => total >= c.min)?.label ?? "Needs Improvement";
+  const breakdown   = metrics.map((m) => ({ label: m.label, score: m.earned, max: m.max }));
 
   return { total, category, breakdown };
 }
