@@ -447,7 +447,7 @@ function EditProfileSection({ userId, currentName, onSaved }: {
     // Update profiles table so RPCs (get_all_users_admin, get_gym_clients, etc.) return new name
     const { error: dbErr } = await supabase
       .from('profiles')
-      .update({ full_name: trimmed } as never)
+      .update({ full_name: trimmed })
       .eq('id', userId);
     if (dbErr) { setError(dbErr.message); setSaving(false); return; }
 

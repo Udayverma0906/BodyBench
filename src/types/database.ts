@@ -135,7 +135,7 @@ export interface Database {
       profiles: {
         Row: Profile;
         Insert: Omit<Profile, "created_at">;
-        Update: Partial<Pick<Profile, "admin_id" | "join_code">>;  // role changes via Supabase dashboard only
+        Update: Partial<Omit<Profile, "id" | "role" | "created_at">>;  // role changes via Supabase dashboard only
       };
       field_configs: {
         Row: FieldConfig;
