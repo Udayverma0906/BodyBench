@@ -1,6 +1,10 @@
 import 'leaflet/dist/leaflet.css';
 import { useCallback, useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, useMapEvents, useMap } from 'react-leaflet';
+import { useTheme } from '../../context/ThemeContext';
+
+const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
 interface LatLng { lat: number; lng: number }
 
@@ -40,6 +44,9 @@ function RecenterMap({ value }: { value: LatLng | null }) {
  * - Calls onChange with { lat, lng } on every location update.
  */
 export default function LocationPicker({ value, onChange }: Props) {
+  const { theme } = useTheme();
+  const tileUrl = theme === 'dark' ? TILE_DARK : TILE_LIGHT;
+
   // Wide view centered roughly over India as default
   const DEFAULT_CENTER: [number, number] = [20.5937, 78.9629];
   const DEFAULT_ZOOM = 4;
@@ -85,7 +92,7 @@ export default function LocationPicker({ value, onChange }: Props) {
           scrollWheelZoom={false}
           attributionControl={false}
         >
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <TileLayer url={tileUrl} />
           <ClickHandler onChange={(lat, lng) => onChange({ lat, lng })} />
           <RecenterMap value={value} />
           {value && (

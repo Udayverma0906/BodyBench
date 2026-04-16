@@ -1,5 +1,9 @@
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
+import { useTheme } from '../../context/ThemeContext';
+
+const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
 export interface GymMarkerData {
   id: string;
@@ -44,6 +48,9 @@ export default function GymMap({
   height = 320,
   className = '',
 }: Props) {
+  const { theme } = useTheme();
+  const tileUrl = theme === 'dark' ? TILE_DARK : TILE_LIGHT;
+
   if (!center) {
     return (
       <div
@@ -74,7 +81,7 @@ export default function GymMap({
         keyboard={interactive}
         attributionControl={false}
       >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <TileLayer url={tileUrl} />
 
         {/* Gym/home marker — always show a marker at center if no explicit markers */}
         {markers.length === 0 && (
