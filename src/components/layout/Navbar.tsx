@@ -511,14 +511,25 @@ export default function Navbar({ onBack }: Props) {
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
-  // Fetch pending trainer request count — superadmin only
+  // Fetch + real-time sync of pending trainer request count — superadmin only
   useEffect(() => {
     if (!isSuperAdmin) return;
-    supabase
-      .from("trainer_requests")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending")
-      .then(({ count }) => setPendingCount(count ?? 0));
+
+    const fetchCount = () =>
+      supabase
+        .from("trainer_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending")
+        .then(({ count }) => setPendingCount(count ?? 0));
+
+    fetchCount();
+
+    const channel = supabase
+      .channel("trainer_requests_pending")
+      .on("postgres_changes", { event: "*", schema: "public", table: "trainer_requests" }, fetchCount)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [isSuperAdmin]);
 
   const avatarUrl: string | undefined =
