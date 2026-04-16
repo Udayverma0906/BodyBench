@@ -130,11 +130,12 @@ function TrainerSection({ profile, userId, onRefresh }: {
       .eq("id", userId);
     if (updateErr) {
       setLeaveError("Couldn't leave. Please try again.");
+      setLoading(false);
     } else {
       await onRefresh();
+      setLoading(false);
+      setConfirming(false);
     }
-    setLoading(false);
-    setConfirming(false);
   };
 
   // ── Connected state ────────────────────────────────────────────────────────
