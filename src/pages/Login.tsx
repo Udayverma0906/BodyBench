@@ -78,6 +78,7 @@ export default function Login() {
   const [mode, setMode]               = useState<Mode>("signin");
   const [email, setEmail]             = useState("");
   const [password, setPassword]       = useState("");
+  const [fullName, setFullName]       = useState("");
   const [error, setError]             = useState<string | null>(null);
   const [submitting, setSubmitting]   = useState(false);
   const [signupDone, setSignupDone]   = useState(false);
@@ -107,7 +108,11 @@ export default function Login() {
         if (error) setError(error.message);
         // onAuthStateChange fires → useEffect above redirects
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName.trim() || null } },
+        });
         if (error) setError(error.message);
         else setSignupDone(true);
       }
@@ -119,6 +124,7 @@ export default function Login() {
   const switchMode = (next: Mode) => {
     setMode(next);
     setError(null);
+    setFullName('');
   };
 
   if (loading) return null;
@@ -210,6 +216,20 @@ export default function Login() {
 
                 {/* Email / password form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {mode === "signup" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Full name
+                      </label>
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Jane Smith"
+                        className={inputClass}
+                      />
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       Email

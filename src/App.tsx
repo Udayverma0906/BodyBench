@@ -10,6 +10,9 @@ import AdminRoute from "./components/auth/AdminRoute";
 import SuperAdminRoute from "./components/auth/SuperAdminRoute";
 import FieldConfigPage from "./pages/admin/FieldConfigPage";
 import TrainerRequestsPage from "./pages/admin/TrainerRequestsPage";
+import MyGym from "./pages/MyGym";
+import AllGymsPage from "./pages/admin/AllGymsPage";
+import AllUsersPage from "./pages/admin/AllUsersPage";
 import { calculateScore } from "./utils/calculateScore";
 import { supabase } from "./lib/supabase";
 import { useAuth } from "./context/AuthContext";
@@ -86,6 +89,14 @@ function App() {
         }
       />
       <Route
+        path="/gym"
+        element={
+          <ProtectedRoute>
+            <MyGym />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/fields"
         element={
           <AdminRoute>
@@ -98,6 +109,30 @@ function App() {
         element={
           <SuperAdminRoute>
             <TrainerRequestsPage />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/gyms"
+        element={
+          <SuperAdminRoute>
+            <AllGymsPage />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/gyms/:trainerId"
+        element={
+          <SuperAdminRoute>
+            <MyGym />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <SuperAdminRoute>
+            <AllUsersPage />
           </SuperAdminRoute>
         }
       />

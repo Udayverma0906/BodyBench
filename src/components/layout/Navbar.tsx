@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import BasePopup from "../ui/BasePopup";
+import LocationPicker from "../map/LocationPicker";
 import { supabase } from "../../lib/supabase";
 import type { Profile, TrainerRequest } from "../../types/database";
 
@@ -182,6 +183,8 @@ function TrainerSection({ profile, userId, onRefresh }: {
 function BecomeTrainerSection({ userId }: { userId: string }) {
   const [request, setRequest]         = useState<TrainerRequest | null | undefined>(undefined);
   const [message, setMessage]         = useState("");
+  const [gymName, setGymName]         = useState("");
+  const [gymLocation, setGymLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showForm, setShowForm]       = useState(false);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string | null>(null);
@@ -212,7 +215,10 @@ function BecomeTrainerSection({ userId }: { userId: string }) {
     setLoading(true);
     setError(null);
     const { error: err } = await supabase.rpc("submit_trainer_request", {
-      p_message: message.trim() || null,
+      p_message:  message.trim() || null,
+      p_gym_name: gymName.trim() || null,
+      p_gym_lat:  gymLocation?.lat ?? null,
+      p_gym_lng:  gymLocation?.lng ?? null,
     });
     if (err) {
       setError(err.message);
@@ -311,11 +317,23 @@ function BecomeTrainerSection({ userId }: { userId: string }) {
       {showForm && (
         <div className="space-y-2">
           <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Request Trainer Access</p>
+
+          {/* Gym name */}
+          <input
+            value={gymName}
+            onChange={(e) => setGymName(e.target.value)}
+            placeholder="Gym name (e.g. FitZone Gym)"
+            className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+          />
+
+          {/* Location picker */}
+          <LocationPicker value={gymLocation} onChange={setGymLocation} />
+
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Optional: tell us a bit about yourself…"
-            rows={3}
+            rows={2}
             className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none transition"
           />
           {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
@@ -336,6 +354,85 @@ function BecomeTrainerSection({ userId }: { userId: string }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── EditProfileSection ────────────────────────────────────────────────────────
+
+function EditProfileSection({ userId, currentName, onSaved }: {
+  userId: string;
+  currentName: string;
+  onSaved: () => void | Promise<void>;
+}) {
+  const [editing, setEditing]   = useState(false);
+  const [name, setName]         = useState(currentName);
+  const [saving, setSaving]     = useState(false);
+  const [error, setError]       = useState<string | null>(null);
+
+  const save = async () => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    setError(null);
+
+    // Update auth metadata → triggers onAuthStateChange → Navbar display refreshes automatically
+    const { error: authErr } = await supabase.auth.updateUser({ data: { full_name: trimmed } });
+    if (authErr) { setError(authErr.message); setSaving(false); return; }
+
+    // Update profiles table so RPCs (get_all_users_admin, get_gym_clients, etc.) return new name
+    const { error: dbErr } = await supabase
+      .from('profiles')
+      .update({ full_name: trimmed } as never)
+      .eq('id', userId);
+    if (dbErr) { setError(dbErr.message); setSaving(false); return; }
+
+    setSaving(false);
+    setEditing(false);
+    onSaved();
+  };
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => { setName(currentName); setEditing(true); }}
+        className="text-[11px] text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition flex items-center gap-1 mt-0.5"
+      >
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M15.232 5.232l3.536 3.536M9 13l6.536-6.536a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2.414a2 2 0 01.586-1.414z" />
+        </svg>
+        Edit name
+      </button>
+    );
+  }
+
+  return (
+    <div className="w-full mt-2 space-y-2">
+      <input
+        autoFocus
+        value={name}
+        onChange={e => { setName(e.target.value); setError(null); }}
+        onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
+        placeholder="Your full name"
+        className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+      />
+      {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setEditing(false)}
+          className="flex-1 py-1.5 text-xs rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={save}
+          disabled={saving || !name.trim()}
+          className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white transition"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -363,7 +460,10 @@ export default function Navbar({ onBack }: Props) {
   const avatarUrl: string | undefined =
     user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture;
   const displayName: string =
-    user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? user?.email ?? "User";
+    profile?.full_name ??
+    user?.user_metadata?.full_name ??
+    user?.user_metadata?.name ??
+    user?.email ?? "User";
 
   const handleSignOut = async () => {
     setShowSignOutConfirm(false);
@@ -373,7 +473,7 @@ export default function Navbar({ onBack }: Props) {
 
   return (
     <>
-      <nav className="sticky top-0 z-10 w-full px-6 py-4 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
+      <nav className="sticky top-0 w-full px-6 py-4 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800" style={{ zIndex: 1050 }}>
         {/* Left — brand + optional back */}
         <div className="flex items-center gap-2">
           {onBack && (
@@ -408,12 +508,36 @@ export default function Navbar({ onBack }: Props) {
               History
             </Link>
           )}
+          {user && (
+            <Link
+              to="/gym"
+              className="px-3 py-1.5 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              My Gym
+            </Link>
+          )}
           {isAdmin && (
             <Link
               to="/admin/fields"
               className="px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
             >
               Fields
+            </Link>
+          )}
+          {isSuperAdmin && (
+            <Link
+              to="/admin/gyms"
+              className="px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+            >
+              Gyms
+            </Link>
+          )}
+          {isSuperAdmin && (
+            <Link
+              to="/admin/users"
+              className="px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+            >
+              Users
             </Link>
           )}
           {isSuperAdmin && (
@@ -493,10 +617,17 @@ export default function Navbar({ onBack }: Props) {
               {user?.email?.charAt(0).toUpperCase() ?? "U"}
             </span>
           )}
-          <div className="text-center">
+          <div className="text-center flex flex-col items-center">
             <p className="font-semibold text-gray-900 dark:text-white text-sm">{displayName}</p>
             {user?.email && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{user.email}</p>
+            )}
+            {user && !avatarUrl && (
+              <EditProfileSection
+                userId={user.id}
+                currentName={profile?.full_name ?? user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? ''}
+                onSaved={refreshProfile}
+              />
             )}
           </div>
         </div>

@@ -16,9 +16,14 @@ export interface Assessment {
 
 export interface Profile {
   id: string;
+  full_name: string | null;
   role: "superadmin" | "admin" | "user";
   admin_id: string | null;   // which admin manages this user; null = no admin
   join_code: string | null;  // admins only — short code clients enter to link themselves
+  gym_name: string | null;
+  gym_lat: number | null;
+  gym_lng: number | null;
+  trainer_joined_at: string | null;
   created_at: string;
 }
 
@@ -58,7 +63,63 @@ export interface TrainerRequest {
   user_name: string | null;
   message: string | null;
   status: "pending" | "approved" | "rejected";
+  gym_name: string | null;
+  gym_lat: number | null;
+  gym_lng: number | null;
   created_at: string;
+}
+
+// ── Gym / My Gym feature ───────────────────────────────────────────────────────
+
+/** Returned by get_gym_clients() RPC */
+export interface GymClient {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  trainer_joined_at: string | null;
+  latest_score: number | null;
+  latest_category: string | null;
+  latest_taken_at: string | null;
+  total_assessments: number;
+  latest_bmi: number | null;
+}
+
+/** Returned by get_trainer_gym() RPC — called by clients */
+export interface TrainerGym {
+  trainer_id: string;
+  trainer_name: string | null;
+  gym_name: string | null;
+  gym_lat: number | null;
+  gym_lng: number | null;
+  trainer_joined_at: string | null;
+}
+
+/** Returned by get_all_gyms() RPC — superadmin */
+export interface GymInfo {
+  trainer_id: string;
+  trainer_name: string | null;
+  email: string;
+  gym_name: string | null;
+  gym_lat: number | null;
+  gym_lng: number | null;
+  client_count: number;
+}
+
+/** Returned by get_all_users_admin() RPC — superadmin */
+export interface AdminUser {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  user_role: "user" | "admin";
+  trainer_id: string | null;
+  trainer_name: string | null;
+  trainer_joined_at: string | null;
+  latest_score: number | null;
+  latest_category: string | null;
+  latest_taken_at: string | null;
+  total_assessments: number;
+  latest_bmi: number | null;
+  score_history: number[] | null;
 }
 
 // ── Supabase Database generic (passed to createClient<Database>) ──────────────

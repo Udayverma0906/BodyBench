@@ -40,11 +40,17 @@ const EMPTY: DashboardData = {
  * useDashboardData — fetches all active assessments for a user and returns
  * pre-computed slices ready to pass directly into dashboard widgets.
  *
+ * @param userId   The user whose assessments to load.
+ * @param useRpc   When true, fetches via get_client_assessments() SECURITY DEFINER
+ *                 RPC instead of a direct table query. Required when the caller is
+ *                 a trainer or superadmin viewing another user's data (RLS blocks
+ *                 cross-user direct table access).
+ *
  * Usage:
- *   const data = useDashboardData(user.id);
- *   <StatWidget title="Total" data={{ value: data.totalAssessments }} />
+ *   const data = useDashboardData(user.id);           // own dashboard
+ *   const data = useDashboardData(client.id, true);   // trainer viewing client
  */
-export function useDashboardData(userId: string): DashboardData {
+export function useDashboardData(userId: string, useRpc = false): DashboardData {
   const [state, setState] = useState<DashboardData>(EMPTY);
 
   useEffect(() => {
@@ -52,19 +58,25 @@ export function useDashboardData(userId: string): DashboardData {
 
     setState(EMPTY); // reset on user change
 
-    supabase
-      .from("assessments")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("is_active", true)
-      .order("taken_at", { ascending: true }) // oldest first for time-series
-      .then(({ data, error }) => {
+    const query = useRpc
+      ? supabase.rpc("get_client_assessments", { p_user_id: userId })
+      : supabase
+          .from("assessments")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("is_active", true)
+          .order("taken_at", { ascending: true });
+
+    query.then(({ data, error }) => {
         if (error || !data) {
           setState((s) => ({ ...s, loading: false }));
           return;
         }
 
-        const rows = data as Assessment[];
+        // RPC returns rows in DB order; sort ascending so time-series is correct
+        const rows = (data as Assessment[]).sort(
+          (a, b) => a.taken_at.localeCompare(b.taken_at)
+        );
         if (rows.length === 0) {
           setState({ ...EMPTY, loading: false });
           return;
