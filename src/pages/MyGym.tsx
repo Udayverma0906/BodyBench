@@ -131,7 +131,7 @@ export default function MyGym() {
 
   const trainerDisplayName = isSuperAdminDrilldown
     ? drilldownGym?.trainer_name
-    : trainerGym?.trainer_name;
+    : (trainerGym?.trainer_name ?? trainerGym?.trainer_email);
 
   // ── Render: no trainer ─────────────────────────────────────────────────────
   if (!isAdmin && !profile?.admin_id) {
@@ -249,7 +249,7 @@ export default function MyGym() {
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Trainer's Gym</h1>
                 {trainerGym && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    With {trainerGym.trainer_name ?? 'Unknown trainer'}
+                    With {trainerGym.trainer_name ?? trainerGym.trainer_email ?? 'Unknown trainer'}
                   </p>
                 )}
               </div>
@@ -284,9 +284,9 @@ export default function MyGym() {
                           <p className="text-base font-bold text-gray-900 dark:text-white">
                             {trainerGym.gym_name ?? 'Your Gym'}
                           </p>
-                          {trainerGym.trainer_name && (
+                          {(trainerGym.trainer_name ?? trainerGym.trainer_email) && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                              Trainer: {trainerGym.trainer_name}
+                              Trainer: {trainerGym.trainer_name ?? trainerGym.trainer_email}
                             </p>
                           )}
                         </div>
@@ -320,7 +320,7 @@ export default function MyGym() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Gym</h1>
           {trainerGym && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              With {trainerGym.trainer_name ?? 'Unknown trainer'}
+              With {trainerGym.trainer_name ?? trainerGym.trainer_email ?? 'Unknown trainer'}
             </p>
           )}
         </div>

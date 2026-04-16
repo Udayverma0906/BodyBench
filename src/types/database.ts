@@ -88,6 +88,7 @@ export interface GymClient {
 export interface TrainerGym {
   trainer_id: string;
   trainer_name: string | null;
+  trainer_email: string | null;
   gym_name: string | null;
   gym_lat: number | null;
   gym_lng: number | null;

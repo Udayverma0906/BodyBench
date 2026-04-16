@@ -98,7 +98,7 @@ function TrainerSection({ profile, userId, onRefresh }: {
       .then(({ data }) => {
         if (mounted) {
           const rows = (data as TrainerGym[]) ?? [];
-          setTrainerName(rows[0]?.trainer_name ?? null);
+          setTrainerName(rows[0]?.trainer_name ?? rows[0]?.trainer_email ?? null);
         }
       });
     return () => { mounted = false; };
