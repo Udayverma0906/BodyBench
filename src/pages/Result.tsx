@@ -10,6 +10,7 @@ interface ResultState {
   category: string;
   breakdown: ScoreBreakdown[];
   formData?: AssessmentForm;
+  saveFailed?: boolean;
 }
 
 interface Props {
@@ -106,7 +107,7 @@ export default function Result({ onRestart }: Props) {
 
   if (!state) return <Navigate to="/" replace />;
 
-  const { score, category, breakdown, formData } = state;
+  const { score, category, breakdown, formData, saveFailed } = state;
   const style = CATEGORY_STYLES[category] ?? FALLBACK_STYLE;
 
   // Compute BMI only when both weight (kg) and height (cm) are present
@@ -124,6 +125,18 @@ export default function Result({ onRestart }: Props) {
       <Navbar />
 
       <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">
+
+        {/* ── Save failure warning ── */}
+        {saveFailed && (
+          <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-3">
+            <svg className="w-5 h-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              Your score couldn't be saved right now. Check your connection and try the assessment again to record it in your history.
+            </p>
+          </div>
+        )}
 
         {/* ── Score card ── */}
         <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-lg p-8 text-center">

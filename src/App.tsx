@@ -23,12 +23,12 @@ function App() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const handleSubmit = (data: AssessmentForm, configs: FieldConfig[]) => {
+  const handleSubmit = async (data: AssessmentForm, configs: FieldConfig[]) => {
     const res = calculateScore(data, configs);
 
-    // Fire-and-forget: save to DB if logged in
+    let saveFailed = false;
     if (user) {
-      supabase
+      const { error } = await supabase
         .from("assessments")
         .insert({
           user_id: user.id,
@@ -37,10 +37,11 @@ function App() {
           breakdown: res.breakdown,
           form_data: data,
           is_active: true,
-        })
-        .then(({ error }) => {
-          if (error) console.error("Failed to save assessment:", error.message);
         });
+      if (error) {
+        console.error("Failed to save assessment:", error.message);
+        saveFailed = true;
+      }
     }
 
     navigate("/result", {
@@ -49,6 +50,7 @@ function App() {
         category: res.category,
         breakdown: res.breakdown,
         formData: data,
+        saveFailed,
       },
     });
   };
