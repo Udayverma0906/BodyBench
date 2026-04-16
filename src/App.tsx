@@ -36,6 +36,7 @@ function App() {
           category: res.category,
           breakdown: res.breakdown,
           form_data: data,
+          is_active: true,
         })
         .then(({ error }) => {
           if (error) console.error("Failed to save assessment:", error.message);
