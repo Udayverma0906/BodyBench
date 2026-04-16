@@ -55,21 +55,25 @@ export default function MyGym() {
 
   // Determine which view to render
   const isSuperAdminDrilldown = isSuperAdmin && !!trainerId;
-  const isTrainerView  = isAdmin || isSuperAdminDrilldown;
-  const isClientView   = !isAdmin && !!profile?.admin_id;
+  const isTrainerView = isAdmin || isSuperAdminDrilldown;
+  const isClientView  = !!profile?.admin_id;           // true for any user (incl. admin) with a trainer
+  const isBothRoles   = isTrainerView && isClientView && !isSuperAdminDrilldown;
+
+  // Tab switcher — only active when user is both a trainer and a client
+  const [activeTab, setActiveTab]         = useState<'trainer' | 'client'>('trainer');
 
   // ── Load clients (trainer view) ────────────────────────────────────────────
   useEffect(() => {
     if (!isTrainerView || !user) return;
-    setClientsLoading(true);
-    const params = trainerId ? { p_trainer_id: trainerId } : {};
-    supabase
-      .rpc('get_gym_clients', params)
-      .then(({ data, error: err }) => {
-        if (err) setError(err.message);
-        else setClients((data as GymClient[]) ?? []);
-        setClientsLoading(false);
-      });
+    async function fetchClients() {
+      setClientsLoading(true);
+      const params = trainerId ? { p_trainer_id: trainerId } : {};
+      const { data, error: err } = await supabase.rpc('get_gym_clients', params);
+      if (err) setError(err.message);
+      else setClients((data as GymClient[]) ?? []);
+      setClientsLoading(false);
+    }
+    fetchClients();
   }, [isTrainerView, user, trainerId]);
 
   // ── Load drilldown gym info (superadmin, no router state) ──────────────────
@@ -98,27 +102,30 @@ export default function MyGym() {
   }, [isClientView, user]);
 
   // ── Resolve gym coordinates ────────────────────────────────────────────────
+  // For hybrid users (both trainer + client) use activeTab to pick the right data.
+  const showingClientView = isBothRoles ? activeTab === 'client' : isClientView;
+
   const gymCenter: [number, number] | null = (() => {
     if (isSuperAdminDrilldown) {
       return drilldownGym?.gym_lat && drilldownGym?.gym_lng
         ? [drilldownGym.gym_lat, drilldownGym.gym_lng] : null;
     }
+    if (showingClientView) {
+      return trainerGym?.gym_lat && trainerGym?.gym_lng
+        ? [trainerGym.gym_lat, trainerGym.gym_lng] : null;
+    }
     if (isTrainerView) {
       return profile?.gym_lat && profile?.gym_lng
         ? [profile.gym_lat, profile.gym_lng] : null;
-    }
-    if (isClientView) {
-      return trainerGym?.gym_lat && trainerGym?.gym_lng
-        ? [trainerGym.gym_lat, trainerGym.gym_lng] : null;
     }
     return null;
   })();
 
   const gymName = isSuperAdminDrilldown
     ? (drilldownGym?.gym_name ?? 'Gym')
-    : isTrainerView
-    ? (profile?.gym_name ?? 'Your Gym')
-    : (trainerGym?.gym_name ?? 'Your Trainer\'s Gym');
+    : showingClientView
+    ? (trainerGym?.gym_name ?? "Your Trainer's Gym")
+    : (profile?.gym_name ?? 'Your Gym');
 
   const trainerDisplayName = isSuperAdminDrilldown
     ? drilldownGym?.trainer_name
@@ -146,67 +153,153 @@ export default function MyGym() {
     );
   }
 
-  // ── Render: trainer view ───────────────────────────────────────────────────
+  // Computed here so both trainer-view and client-view paths can use them.
+  const joinedAgo    = timeAgo(trainerGym?.trainer_joined_at ?? null);
+  const isLoadingGym = trainerGym === undefined;
+
+  // ── Render: trainer view (+ hybrid "My Trainer" tab) ──────────────────────
   if (isTrainerView) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
         <Navbar />
         <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
 
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              {isSuperAdminDrilldown && (
+          {/* Tab strip — only when user is both trainer and client */}
+          {isBothRoles && (
+            <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl w-fit">
+              {(['trainer', 'client'] as const).map((tab) => (
                 <button
-                  onClick={() => navigate('/admin/gyms')}
-                  className="text-xs text-purple-600 dark:text-purple-400 hover:underline mb-2 flex items-center gap-1"
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-1.5 text-sm font-medium rounded-lg transition ${
+                    activeTab === tab
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  All Gyms
+                  {tab === 'trainer' ? 'My Gym' : 'My Trainer'}
                 </button>
-              )}
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{gymName}</h1>
-              {trainerDisplayName && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Trainer: {trainerDisplayName}</p>
-              )}
+              ))}
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-extrabold text-purple-600 dark:text-purple-400">{clients.length}</p>
-              <p className="text-xs text-gray-400">client{clients.length !== 1 ? 's' : ''}</p>
-            </div>
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950 rounded-xl px-4 py-3">{error}</p>
           )}
 
-          {/* Map */}
-          <GymMap
-            center={gymCenter}
-            zoom={14}
-            interactive={false}
-            height={280}
-            markers={gymCenter ? [{
-              id: 'gym',
-              position: gymCenter,
-              label: gymName,
-              subLabel: `${clients.length} client${clients.length !== 1 ? 's' : ''}`,
-            }] : []}
-          />
+          {/* ── My Gym (trainer) tab ── */}
+          {!showingClientView && (
+            <>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  {isSuperAdminDrilldown && (
+                    <button
+                      onClick={() => navigate('/admin/gyms')}
+                      className="text-xs text-purple-600 dark:text-purple-400 hover:underline mb-2 flex items-center gap-1"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      All Gyms
+                    </button>
+                  )}
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{gymName}</h1>
+                  {trainerDisplayName && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Trainer: {trainerDisplayName}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-extrabold text-purple-600 dark:text-purple-400">{clients.length}</p>
+                  <p className="text-xs text-gray-400">client{clients.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
 
-          {/* Client section */}
-          <div className="space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-              Clients
-            </h2>
-            <ClientGrid
-              clients={clients}
-              loading={clientsLoading}
-              onClientClick={setSelected}
-            />
-          </div>
+              {error && (
+                <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950 rounded-xl px-4 py-3">{error}</p>
+              )}
+
+              <GymMap
+                center={gymCenter}
+                zoom={14}
+                interactive={false}
+                height={280}
+                markers={gymCenter ? [{
+                  id: 'gym',
+                  position: gymCenter,
+                  label: gymName,
+                  subLabel: `${clients.length} client${clients.length !== 1 ? 's' : ''}`,
+                }] : []}
+              />
+
+              <div className="space-y-3">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  Clients
+                </h2>
+                <ClientGrid
+                  clients={clients}
+                  loading={clientsLoading}
+                  onClientClick={setSelected}
+                />
+              </div>
+            </>
+          )}
+
+          {/* ── My Trainer (client) tab — only for hybrid users ── */}
+          {showingClientView && (
+            <>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Trainer's Gym</h1>
+                {trainerGym && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    With {trainerGym.trainer_name ?? 'your trainer'}
+                  </p>
+                )}
+              </div>
+
+              {error && (
+                <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950 rounded-xl px-4 py-3">{error}</p>
+              )}
+
+              {isLoadingGym ? (
+                <div className="flex justify-center py-16">
+                  <div className="w-7 h-7 rounded-full border-4 border-purple-500 border-t-transparent animate-spin" />
+                </div>
+              ) : (
+                <>
+                  <GymMap
+                    center={gymCenter}
+                    zoom={14}
+                    interactive={false}
+                    height={300}
+                    markers={gymCenter ? [{
+                      id: 'gym',
+                      position: gymCenter,
+                      label: gymName,
+                      subLabel: `Joined ${joinedAgo}`,
+                    }] : []}
+                  />
+
+                  {trainerGym && (
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-base font-bold text-gray-900 dark:text-white">
+                            {trainerGym.gym_name ?? 'Your Gym'}
+                          </p>
+                          {trainerGym.trainer_name && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                              Trainer: {trainerGym.trainer_name}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Member since</p>
+                          <p className="text-sm font-semibold text-purple-600 dark:text-purple-400">{joinedAgo}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
         </main>
 
         {/* Detail panel */}
@@ -215,16 +308,12 @@ export default function MyGym() {
     );
   }
 
-  // ── Render: client view ────────────────────────────────────────────────────
-  const joinedAgo = timeAgo(trainerGym?.trainer_joined_at ?? null);
-  const isLoadingGym = trainerGym === undefined;
-
+  // ── Render: client view (non-admin users with a trainer) ───────────────────
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
-        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Gym</h1>
           {trainerGym && (
@@ -244,7 +333,6 @@ export default function MyGym() {
           </div>
         ) : (
           <>
-            {/* Map */}
             <GymMap
               center={gymCenter}
               zoom={14}
@@ -258,9 +346,8 @@ export default function MyGym() {
               }] : []}
             />
 
-            {/* Gym info card */}
             {trainerGym && (
-              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 space-y-3">
+              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-base font-bold text-gray-900 dark:text-white">

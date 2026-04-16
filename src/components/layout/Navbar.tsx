@@ -700,8 +700,8 @@ export default function Navbar({ onBack }: Props) {
           <JoinCodeSection profile={profile} />
         )}
 
-        {/* Trainer section — non-admin users only */}
-        {user && !isAdmin && (
+        {/* Trainer section — all users (admins can also be a client of another trainer) */}
+        {user && (
           <TrainerSection
             profile={profile}
             userId={user.id}
