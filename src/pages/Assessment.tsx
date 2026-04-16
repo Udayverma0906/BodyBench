@@ -108,8 +108,9 @@ export default function Assessment({ onSubmit, onBack }: Props) {
   const adminId = isAdmin ? user?.id : profile?.admin_id;
   const { configs, loading: configsLoading } = useFieldConfigs(adminId);
 
-  const [form, setForm]     = useState<AssessmentForm>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [form, setForm]           = useState<AssessmentForm>({});
+  const [errors, setErrors]       = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   // True once loading is done and there is at least one configured field.
   const useDynamic = !configsLoading && configs.length > 0;
@@ -155,7 +156,8 @@ export default function Assessment({ onSubmit, onBack }: Props) {
   };
 
   const handleSubmit = () => {
-    if (!validateAll()) return;
+    if (submitting || !validateAll()) return;
+    setSubmitting(true);
     onSubmit(form, useDynamic ? configs : []);
   };
 
@@ -262,8 +264,8 @@ export default function Assessment({ onSubmit, onBack }: Props) {
           )}
 
           {!configsLoading && (
-            <Button fullWidth onClick={handleSubmit}>
-              Calculate Score
+            <Button fullWidth onClick={handleSubmit} disabled={submitting}>
+              {submitting ? "Calculating…" : "Calculate Score"}
             </Button>
           )}
         </div>
