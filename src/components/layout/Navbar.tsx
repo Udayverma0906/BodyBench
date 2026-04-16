@@ -10,7 +10,7 @@ import type { Profile, TrainerGym, TrainerRequest } from "../../types/database";
 // ── Update these two constants with your own links ──────────────────────────
 const LINKEDIN_URL = "https://www.linkedin.com/in/uday-verma0906/";
 const GITHUB_URL   = "https://github.com/Udayverma0906/BodyBench";
-const APP_VERSION  = "2.0.0";
+const APP_VERSION  = "3.0.0";
 // ────────────────────────────────────────────────────────────────────────────
 
 interface Props {
