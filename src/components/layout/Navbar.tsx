@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import BasePopup from "../ui/BasePopup";
 import LocationPicker from "../map/LocationPicker";
 import { supabase } from "../../lib/supabase";
-import type { Profile, TrainerRequest } from "../../types/database";
+import type { Profile, TrainerGym, TrainerRequest } from "../../types/database";
 
 // ── Update these two constants with your own links ──────────────────────────
 const LINKEDIN_URL = "https://www.linkedin.com/in/uday-verma0906/";
@@ -81,33 +81,27 @@ function TrainerSection({ profile, userId, onRefresh }: {
   userId: string;
   onRefresh: () => Promise<void>;
 }) {
-  const [code, setCode]           = useState("");
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState<string | null>(null);
+  const [code, setCode]             = useState("");
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState<string | null>(null);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [trainerName, setTrainerName] = useState<string | null>(null);
 
+  // Use get_trainer_gym RPC — it resolves trainer_name from both profiles
+  // and OAuth metadata, same source as the MyGym page uses.
   useEffect(() => {
-    if (!profile?.admin_id) {
-      return;
-    }
-
+    if (!profile?.admin_id) return;
     let mounted = true;
-
     supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", profile.admin_id)
-      .maybeSingle()
+      .rpc("get_trainer_gym")
       .then(({ data }) => {
         if (mounted) {
-          setTrainerName((data as Profile)?.full_name ?? null);
+          const rows = (data as TrainerGym[]) ?? [];
+          setTrainerName(rows[0]?.trainer_name ?? null);
         }
       });
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [profile?.admin_id]);
 
   const join = async () => {
@@ -129,11 +123,16 @@ function TrainerSection({ profile, userId, onRefresh }: {
 
   const leave = async () => {
     setLoading(true);
+    setLeaveError(null);
     const { error: updateErr } = await supabase
       .from("profiles")
       .update({ admin_id: null })
       .eq("id", userId);
-    if (!updateErr) await onRefresh();
+    if (updateErr) {
+      setLeaveError("Couldn't leave. Please try again.");
+    } else {
+      await onRefresh();
+    }
     setLoading(false);
     setConfirming(false);
   };
@@ -144,15 +143,15 @@ function TrainerSection({ profile, userId, onRefresh }: {
       <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-1 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Trainer</p>
-            <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
-              Connected{trainerName ? ` to ${trainerName}` : ""} ✓
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              {trainerName ?? "Trainer"}
             </p>
+            <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Connected ✓</p>
           </div>
           {confirming ? (
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setConfirming(false)}
+                onClick={() => { setConfirming(false); setLeaveError(null); }}
                 className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
               >
                 Cancel
@@ -174,6 +173,9 @@ function TrainerSection({ profile, userId, onRefresh }: {
             </button>
           )}
         </div>
+        {leaveError && (
+          <p className="text-xs text-red-500 dark:text-red-400 mt-1.5">{leaveError}</p>
+        )}
       </div>
     );
   }
@@ -380,6 +382,41 @@ function BecomeTrainerSection({ userId }: { userId: string }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── JoinCodeSection — shown for admin/trainer users to share their code
+// Read-only display + copy. Regeneration is managed in Field Config page.
+
+function JoinCodeSection({ profile }: { profile: Profile }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    if (!profile.join_code) return;
+    await navigator.clipboard.writeText(profile.join_code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (!profile.join_code) return null;
+
+  return (
+    <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-1 mb-4">
+      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+        Gym Join Code
+      </p>
+      <div className="flex items-center gap-2">
+        <code className="flex-1 font-mono text-sm font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950 px-3 py-2 rounded-lg tracking-widest text-center select-all">
+          {profile.join_code}
+        </code>
+        <button
+          onClick={copy}
+          className="px-3 py-2 text-xs font-semibold rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition min-w-[64px]"
+        >
+          {copied ? "✓ Copied" : "Copy"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -657,6 +694,11 @@ export default function Navbar({ onBack }: Props) {
             )}
           </div>
         </div>
+
+        {/* Join code — admin/trainer users only */}
+        {user && isAdmin && profile && (
+          <JoinCodeSection profile={profile} />
+        )}
 
         {/* Trainer section — non-admin users only */}
         {user && !isAdmin && (

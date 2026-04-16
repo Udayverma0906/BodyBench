@@ -543,17 +543,9 @@ function JoinCodeCard({ userId }: { userId: string }) {
           </span>
           <button
             onClick={copy}
-            disabled={working}
             className="px-3 py-2 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
           >
             {copied ? "Copied!" : "Copy"}
-          </button>
-          <button
-            onClick={generateAndSave}
-            disabled={working}
-            className="px-3 py-2 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-          >
-            {working ? "…" : "Regenerate"}
           </button>
         </div>
       ) : (
