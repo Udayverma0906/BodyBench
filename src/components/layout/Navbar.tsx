@@ -85,6 +85,30 @@ function TrainerSection({ profile, userId, onRefresh }: {
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [trainerName, setTrainerName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!profile?.admin_id) {
+      return;
+    }
+
+    let mounted = true;
+
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", profile.admin_id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (mounted) {
+          setTrainerName((data as Profile)?.full_name ?? null);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [profile?.admin_id]);
 
   const join = async () => {
     const trimmed = code.trim().toUpperCase();
@@ -121,7 +145,9 @@ function TrainerSection({ profile, userId, onRefresh }: {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Trainer</p>
-            <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Connected ✓</p>
+            <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
+              Connected{trainerName ? ` to ${trainerName}` : ""} ✓
+            </p>
           </div>
           {confirming ? (
             <div className="flex items-center gap-3">
