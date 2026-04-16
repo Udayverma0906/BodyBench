@@ -9,11 +9,12 @@ interface Props {
 }
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
+  primary:
+    "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20 hover:from-indigo-600 hover:to-violet-700 hover:shadow-indigo-500/30",
   outline:
     "border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
   ghost:
-    "text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400",
+    "text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400",
 };
 
 export default function Button({
