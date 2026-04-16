@@ -13,11 +13,13 @@ import type { GymClient, TrainerGym, GymInfo } from '../types/database';
 function timeAgo(iso: string | null): string {
   if (!iso) return '—';
   const ms     = Date.now() - new Date(iso).getTime();
-  const months = Math.floor(ms / (1000 * 60 * 60 * 24 * 30));
+  const days   = Math.floor(ms / (1000 * 60 * 60 * 24));
+  const months = Math.floor(days / 30);
   const years  = Math.floor(months / 12);
-  if (years >= 1) return `${years} year${years > 1 ? 's' : ''} ago`;
+  if (years >= 1)  return `${years} year${years > 1 ? 's' : ''} ago`;
   if (months >= 1) return `${months} month${months > 1 ? 's' : ''} ago`;
-  return 'this month';
+  if (days >= 1)   return `${days} day${days > 1 ? 's' : ''} ago`;
+  return 'today';
 }
 
 // ── MyGym ─────────────────────────────────────────────────────────────────────
@@ -247,7 +249,7 @@ export default function MyGym() {
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Trainer's Gym</h1>
                 {trainerGym && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    With {trainerGym.trainer_name ?? 'your trainer'}
+                    With {trainerGym.trainer_name ?? 'Unknown trainer'}
                   </p>
                 )}
               </div>
@@ -318,7 +320,7 @@ export default function MyGym() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Gym</h1>
           {trainerGym && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              With {trainerGym.trainer_name ?? 'your trainer'}
+              With {trainerGym.trainer_name ?? 'Unknown trainer'}
             </p>
           )}
         </div>
