@@ -192,12 +192,12 @@ function TrainerSection({ profile, userId, onRefresh }: {
           onKeyDown={(e) => e.key === "Enter" && join()}
           placeholder="Enter code"
           maxLength={8}
-          className="flex-1 px-3 py-1.5 text-sm font-mono rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          className="flex-1 px-3 py-1.5 text-sm font-mono rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
         />
         <button
           onClick={join}
           disabled={loading || !code.trim()}
-          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white transition"
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 disabled:opacity-50 text-white transition"
         >
           {loading ? "…" : "Join"}
         </button>
@@ -319,7 +319,7 @@ function BecomeTrainerSection({ userId }: { userId: string }) {
           </div>
           <button
             onClick={() => { dismissRejection(); setRequest(null); setShowForm(true); }}
-            className="text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
+            className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition"
           >
             Try again
           </button>
@@ -460,7 +460,7 @@ function EditProfileSection({ userId, currentName, onSaved }: {
     return (
       <button
         onClick={() => { setName(currentName); setEditing(true); }}
-        className="text-[11px] text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition flex items-center gap-1 mt-0.5"
+        className="text-[11px] text-gray-400 dark:text-gray-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition flex items-center gap-1 mt-0.5"
       >
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -479,7 +479,7 @@ function EditProfileSection({ userId, currentName, onSaved }: {
         onChange={e => { setName(e.target.value); setError(null); }}
         onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
         placeholder="Your full name"
-        className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+        className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
       />
       {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
@@ -492,7 +492,7 @@ function EditProfileSection({ userId, currentName, onSaved }: {
         <button
           onClick={save}
           disabled={saving || !name.trim()}
-          className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white transition"
+          className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 disabled:opacity-50 text-white transition"
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
@@ -550,7 +550,7 @@ export default function Navbar({ onBack }: Props) {
 
   return (
     <>
-      <nav className="sticky top-0 w-full px-6 py-4 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800" style={{ zIndex: 1050 }}>
+      <nav className="sticky top-0 w-full px-6 py-4 flex justify-between items-center bg-white/75 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-black/[0.06] dark:border-white/[0.06]" style={{ zIndex: 1050 }}>
         {/* Left — brand + optional back */}
         <div className="flex items-center gap-2">
           {onBack && (
@@ -562,7 +562,7 @@ export default function Navbar({ onBack }: Props) {
               <ChevronLeft />
             </button>
           )}
-          <Link to="/" className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <Link to="/" className="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
             BodyBench
           </Link>
         </div>
@@ -653,12 +653,12 @@ export default function Navbar({ onBack }: Props) {
               <button
                 onClick={() => setShowProfile(true)}
                 aria-label="Your profile"
-                className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-blue-500 transition focus:outline-none"
+                className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-indigo-500 transition focus:outline-none"
               >
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
-                  <span className="w-full h-full bg-blue-600 dark:bg-blue-500 text-white text-xs font-bold flex items-center justify-center select-none">
+                  <span className="w-full h-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-xs font-bold flex items-center justify-center select-none">
                     {user.email?.charAt(0).toUpperCase() ?? "U"}
                   </span>
                 )}
@@ -666,7 +666,7 @@ export default function Navbar({ onBack }: Props) {
             ) : (
               <Link
                 to="/login"
-                className="text-sm font-medium px-3 py-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                className="text-sm font-medium px-3 py-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition"
               >
                 Sign In
               </Link>
@@ -687,10 +687,10 @@ export default function Navbar({ onBack }: Props) {
               src={avatarUrl}
               alt={displayName}
               referrerPolicy="no-referrer"
-              className="w-16 h-16 rounded-full object-cover ring-2 ring-blue-100 dark:ring-blue-900"
+              className="w-16 h-16 rounded-full object-cover ring-2 ring-indigo-100 dark:ring-indigo-900"
             />
           ) : (
-            <span className="w-16 h-16 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-2xl font-bold flex items-center justify-center select-none">
+            <span className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-2xl font-bold flex items-center justify-center select-none">
               {user?.email?.charAt(0).toUpperCase() ?? "U"}
             </span>
           )}
@@ -769,7 +769,7 @@ export default function Navbar({ onBack }: Props) {
       >
         {/* Version badge */}
         <div className="flex items-center gap-2 mb-5">
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400">
             v{APP_VERSION}
           </span>
           <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -785,7 +785,7 @@ export default function Navbar({ onBack }: Props) {
               href={LINKEDIN_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
             >
               Uday Verma
               <ExternalLinkIcon />
@@ -799,7 +799,7 @@ export default function Navbar({ onBack }: Props) {
               href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
             >
               Udayverma0906/BodyBench
               <ExternalLinkIcon />
