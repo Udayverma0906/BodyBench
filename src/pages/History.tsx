@@ -198,7 +198,8 @@ export default function History() {
   const [showDeleted, setShowDeleted] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
+    let active = true;
     supabase
       .from("assessments")
       .select("*")
@@ -206,10 +207,12 @@ export default function History() {
       .eq("is_active", true)          // only active (non-deleted) rows
       .order("taken_at", { ascending: false })
       .then(({ data, error }) => {
+        if (!active) return;
         if (!error && data) setAssessments(data as Assessment[]);
         setLoading(false);
       });
-  }, [user]);
+    return () => { active = false; };
+  }, [user?.id]);
 
   // Soft-delete: flip is_active → false, then remove from local state
   const handleDelete = async (id: string) => {

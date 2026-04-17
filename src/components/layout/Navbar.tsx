@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import BasePopup from "../ui/BasePopup";
@@ -506,6 +506,7 @@ function EditProfileSection({ userId, currentName, onSaved }: {
 export default function Navbar({ onBack }: Props) {
   const { theme, toggle } = useTheme();
   const { user, profile, isAdmin, isSuperAdmin, signOut, refreshProfile } = useAuth();
+  const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
@@ -544,6 +545,7 @@ export default function Navbar({ onBack }: Props) {
     setShowSignOutConfirm(false);
     setShowProfile(false);
     await signOut();
+    navigate("/login", { replace: true });
   };
 
   return (

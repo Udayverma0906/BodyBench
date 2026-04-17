@@ -56,6 +56,7 @@ export function useDashboardData(userId: string, useRpc = false): DashboardData 
   useEffect(() => {
     if (!userId) return;
 
+    let active = true;
     setState(EMPTY); // reset on user change
 
     const query = useRpc
@@ -68,6 +69,7 @@ export function useDashboardData(userId: string, useRpc = false): DashboardData 
           .order("taken_at", { ascending: true });
 
     query.then(({ data, error }) => {
+        if (!active) return;
         if (error || !data) {
           setState((s) => ({ ...s, loading: false }));
           return;
@@ -144,7 +146,9 @@ export function useDashboardData(userId: string, useRpc = false): DashboardData 
           avgBreakdown,
         });
       });
-  }, [userId]);
+
+    return () => { active = false; };
+  }, [userId, useRpc]);
 
   return state;
 }

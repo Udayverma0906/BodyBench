@@ -31,17 +31,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // onAuthStateChange fires INITIAL_SESSION immediately on mount, making
-    // getSession redundant. Awaiting fetchProfile ensures setLoading(false)
-    // only fires after the profile is populated — no flash of wrong role.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // Non-async callback — Supabase v2 internally awaits the callback return value,
+    // so an async callback blocks the entire auth event queue (token refresh, sign-out
+    // all stall until the DB query resolves). Fire fetchProfile as a non-blocking
+    // promise instead; loading stays true until the profile resolves on first load.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // USER_UPDATED fires when updateUser() is called (e.g. name save). The session
+      // and user are unchanged — skip a full reload to avoid wiping profile state.
+      if (event === 'USER_UPDATED') return;
+
       setSession(session);
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        fetchProfile(session.user.id).finally(() => setLoading(false));
       } else {
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
