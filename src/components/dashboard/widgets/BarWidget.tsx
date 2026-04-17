@@ -6,7 +6,7 @@ import type { CategoryPoint, WidgetLayoutProps } from "../../../types/widget";
 
 function BarChart({
   data,
-  color = "#3b82f6",
+  color = "#bcbe1e",
 }: {
   data: CategoryPoint[];
   color?: string;
@@ -72,7 +72,7 @@ function BarChart({
         // Tooltip position
         const ttW = 44, ttH = 22;
         const ttX = Math.max(padL, Math.min(x + barW / 2 - ttW / 2, W - padR - ttW));
-        const ttY = y - ttH - 6;
+        const ttY = y - ttH + 6;
 
         return (
           <g
