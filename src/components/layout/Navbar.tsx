@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
@@ -342,47 +343,70 @@ function BecomeTrainerSection({ userId }: { userId: string }) {
         </div>
       )}
 
-      {/* Request form */}
-      {showForm && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Request Trainer Access</p>
+      {/* Trainer request form — portalled to document.body so it escapes the
+          transform-gpu ancestor (BasePopup card) that would break fixed positioning */}
+      {showForm && createPortal(
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => { setShowForm(false); setError(null); }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-2xl p-6"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Request Trainer Access</h2>
+              <button
+                onClick={() => { setShowForm(false); setError(null); }}
+                aria-label="Close"
+                className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
 
-          {/* Gym name */}
-          <input
-            value={gymName}
-            onChange={(e) => setGymName(e.target.value)}
-            placeholder="Gym name (e.g. FitZone Gym)"
-            className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
-          />
+            <div className="space-y-3">
+              <input
+                value={gymName}
+                onChange={(e) => setGymName(e.target.value)}
+                placeholder="Gym name (e.g. FitZone Gym)"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+              />
 
-          {/* Location picker */}
-          <LocationPicker value={gymLocation} onChange={setGymLocation} />
+              <LocationPicker value={gymLocation} onChange={setGymLocation} />
 
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Optional: tell us a bit about yourself…"
-            rows={2}
-            className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none transition"
-          />
-          {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setShowForm(false); setError(null); }}
-              className="flex-1 py-1.5 text-xs rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={submit}
-              disabled={loading}
-              className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white transition"
-            >
-              {loading ? "Sending…" : "Submit"}
-            </button>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Optional: tell us a bit about yourself…"
+                rows={3}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none transition"
+              />
+
+              {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
+
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => { setShowForm(false); setError(null); }}
+                  className="flex-1 py-2 text-sm rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submit}
+                  disabled={loading}
+                  className="flex-1 py-2 text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white transition"
+                >
+                  {loading ? "Sending…" : "Submit"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }
