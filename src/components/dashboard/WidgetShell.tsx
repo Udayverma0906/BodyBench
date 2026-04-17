@@ -49,9 +49,10 @@ export default function WidgetShell({
       className={[
         COL_SPAN[colSpan],
         ROW_SPAN[rowSpan],
-        "bg-white dark:bg-gray-800",
-        "rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm",
+        "bg-white dark:bg-zinc-800",
+        "rounded-2xl border border-gray-100 dark:border-zinc-700 shadow-sm",
         "p-5 flex flex-col gap-3",
+        "transition-all duration-200 hover:shadow-md hover:-translate-y-0.5",
         className,
       ].join(" ")}
     >

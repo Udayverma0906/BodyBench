@@ -21,27 +21,31 @@ interface Props {
 
 const CATEGORY_STYLES: Record<
   string,
-  { ring: string; badge: string; subtitle: string }
+  { ring: string; badge: string; subtitle: string; accent: string }
 > = {
   Excellent: {
     ring:     "text-green-500 dark:text-green-400",
     badge:    "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-400",
     subtitle: "Outstanding fitness level",
+    accent:   "from-green-500 to-emerald-400",
   },
   Good: {
-    ring:     "text-blue-600 dark:text-blue-400",
-    badge:    "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400",
+    ring:     "text-indigo-500 dark:text-indigo-400",
+    badge:    "bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-400",
     subtitle: "Above average fitness",
+    accent:   "from-indigo-500 to-violet-500",
   },
   Average: {
     ring:     "text-amber-500 dark:text-amber-400",
     badge:    "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-400",
     subtitle: "Room for improvement",
+    accent:   "from-amber-500 to-yellow-400",
   },
   "Needs Improvement": {
     ring:     "text-red-500 dark:text-red-400",
     badge:    "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400",
     subtitle: "Focus on building the basics",
+    accent:   "from-red-500 to-rose-400",
   },
 };
 
@@ -121,7 +125,7 @@ export default function Result({ onRestart }: Props) {
   const markerPct = bmi !== null ? bmiToMarkerPct(bmi) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Navbar />
 
       <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">
@@ -139,7 +143,10 @@ export default function Result({ onRestart }: Props) {
         )}
 
         {/* ── Score card ── */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-lg p-8 text-center">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-700 shadow-lg p-8 text-center">
+          {/* Category accent strip */}
+          <div className={`h-1 w-20 mx-auto rounded-full bg-gradient-to-r ${style.accent} mb-6`} />
+
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
             Your Fitness Score
           </h2>
@@ -158,7 +165,7 @@ export default function Result({ onRestart }: Props) {
 
         {/* ── BMI card (only when weight + height were entered) ── */}
         {bmi !== null && bmiCat !== null && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-lg p-8">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-700 shadow-lg p-8">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
               Body Mass Index (BMI)
             </h3>
@@ -210,7 +217,7 @@ export default function Result({ onRestart }: Props) {
         )}
 
         {/* ── Breakdown card ── */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-lg p-8">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-700 shadow-lg p-8">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
             Score Breakdown
           </h3>
@@ -229,9 +236,9 @@ export default function Result({ onRestart }: Props) {
                       <span className="font-normal text-gray-400">/ {max}</span>
                     </span>
                   </div>
-                  <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
                     <div
-                      className="h-2 bg-blue-600 rounded-full transition-all duration-700"
+                      className="h-2 bg-indigo-500 rounded-full transition-all duration-700"
                       style={{ width: `${pct}%` }}
                     />
                   </div>

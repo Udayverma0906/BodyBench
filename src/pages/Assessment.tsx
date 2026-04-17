@@ -86,7 +86,7 @@ function validateDynamic(cfg: FieldConfig, val?: number): string {
 // ─── Loading skeleton card ────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 animate-pulse">
+    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-700 shadow-sm p-6 animate-pulse border-l-4 border-l-indigo-500/30">
       <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-6" />
       <div className="grid sm:grid-cols-2 gap-5">
         {[1, 2].map((i) => (
@@ -171,7 +171,7 @@ export default function Assessment({ onSubmit, onBack }: Props) {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Navbar onBack={onBack} />
 
       <div className="max-w-2xl mx-auto px-6 py-10">
@@ -183,6 +183,10 @@ export default function Assessment({ onSubmit, onBack }: Props) {
             Fill in what you can — every field is optional. Your score is calculated
             from the metrics you provide.
           </p>
+          {/* Progress strip */}
+          <div className="mt-4 h-1 w-full bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full w-0 transition-all duration-500" />
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -194,7 +198,7 @@ export default function Assessment({ onSubmit, onBack }: Props) {
             dynamicSections.map(({ heading, note, fields }) => (
               <div
                 key={heading}
-                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6"
+                className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-700 shadow-sm p-6 border-l-4 border-l-indigo-500/50"
               >
                 <div className="mb-5">
                   <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
@@ -228,7 +232,7 @@ export default function Assessment({ onSubmit, onBack }: Props) {
             FIELD_GROUPS.map(({ heading, note, fields }) => (
               <div
                 key={heading}
-                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6"
+                className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-700 shadow-sm p-6 border-l-4 border-l-indigo-500/50"
               >
                 <div className="mb-5">
                   <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">

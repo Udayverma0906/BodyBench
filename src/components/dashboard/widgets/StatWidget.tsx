@@ -6,7 +6,7 @@ import type { StatData, WidgetLayoutProps } from "../../../types/widget";
 const COLOR = {
   default: { value: "text-gray-900 dark:text-white",      delta_pos: "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400", delta_neg: "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400" },
   green:   { value: "text-green-600 dark:text-green-400", delta_pos: "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400", delta_neg: "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400" },
-  blue:    { value: "text-blue-600 dark:text-blue-400",   delta_pos: "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400", delta_neg: "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400" },
+  blue:    { value: "text-indigo-500 dark:text-indigo-400", delta_pos: "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400", delta_neg: "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400" },
   amber:   { value: "text-amber-500 dark:text-amber-400", delta_pos: "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400", delta_neg: "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400" },
   red:     { value: "text-red-500 dark:text-red-400",     delta_pos: "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400", delta_neg: "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400" },
 };
@@ -38,7 +38,7 @@ export default function StatWidget({ title, subtitle, data, loading, colSpan, ro
     <WidgetShell title={title} subtitle={subtitle} colSpan={colSpan} rowSpan={rowSpan}>
       {loading || !data ? (
         <div className="flex-1 flex items-center justify-center py-4">
-          <div className="w-6 h-6 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
+          <div className="w-6 h-6 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
         </div>
       ) : (
         <div className="flex flex-col gap-2">

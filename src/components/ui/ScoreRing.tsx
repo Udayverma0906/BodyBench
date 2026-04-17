@@ -9,7 +9,7 @@ export default function ScoreRing({
   score,
   max = 100,
   size = 180,
-  colorClass = "text-blue-600 dark:text-blue-500",
+  colorClass = "text-indigo-500 dark:text-indigo-400",
 }: Props) {
   const strokeWidth = 14;
   const radius = (size - strokeWidth * 2) / 2;

@@ -42,7 +42,7 @@ export default function InputField({
           "outline-none transition",
           error
             ? "border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900"
-            : "border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 focus:border-blue-400 dark:focus:border-blue-500",
+            : "border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900 focus:border-indigo-400 dark:focus:border-indigo-500",
         ].join(" ")}
       />
 

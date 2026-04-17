@@ -188,9 +188,11 @@ export default function TrendChart({
 
         // Tooltip position: clamp so it never clips left/right edge
         const ttX = Math.max(padL, Math.min(p.x - TT_W / 2, W - padR - TT_W));
-        // Show above the dot; if too close to top, flip below
+        // Show above the dot; flip below if clearance is tight; hard-clamp to SVG bounds
         const ttAboveY = p.y - TT_H - 10;
-        const ttY = ttAboveY >= padT ? ttAboveY : p.y + 12;
+        const ttBelowY = p.y + 12;
+        const rawTtY = ttAboveY >= padT + 6 ? ttAboveY : ttBelowY;
+        const ttY = Math.max(2, Math.min(rawTtY, H - TT_H - 2));
 
         return (
           <g
