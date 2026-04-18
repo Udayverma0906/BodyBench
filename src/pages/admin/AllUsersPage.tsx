@@ -23,7 +23,7 @@ function timeAgo(iso: string | null): string {
 
 const CATEGORY_STYLE: Record<string, string> = {
   Excellent: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300',
-  Good:      'bg-blue-100  dark:bg-blue-950  text-blue-700  dark:text-blue-300',
+  Good:      'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300',
   Fair:      'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300',
   Poor:      'bg-red-100   dark:bg-red-950   text-red-700   dark:text-red-300',
 };
@@ -121,7 +121,7 @@ export default function AllUsersPage() {
   })();
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Navbar />
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
 
@@ -134,7 +134,7 @@ export default function AllUsersPage() {
             </p>
           </div>
           <div className="flex items-center gap-6">
-            <SummaryChip label="With trainer"  value={String(withTrainer)}   color="purple" />
+            <SummaryChip label="With trainer"  value={String(withTrainer)}   color="indigo" />
             <SummaryChip label="Trainers"       value={String(trainerCount)}  color="amber"  />
             <SummaryChip label="Unassigned"     value={String(users.filter(u => !u.trainer_id && u.user_role === 'user').length)} />
             {avgScore !== null && <SummaryChip label="Avg score" value={String(avgScore)} color="green" />}
@@ -151,12 +151,12 @@ export default function AllUsersPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by name, email, or trainer…"
-            className="flex-1 min-w-[200px] px-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+            className="flex-1 min-w-[200px] px-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
           />
           <select
             value={trainerFilter}
             onChange={e => setTrainerFilter(e.target.value)}
-            className="px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+            className="px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
           >
             <option value="all">All trainers</option>
             <option value="__none__">Unassigned</option>
@@ -169,17 +169,17 @@ export default function AllUsersPage() {
         {/* Table */}
         {loading ? (
           <div className="flex justify-center py-16">
-            <div className="w-7 h-7 rounded-full border-4 border-purple-500 border-t-transparent animate-spin" />
+            <div className="w-7 h-7 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-10">
             {search || trainerFilter !== 'all' ? 'No users match your filters.' : 'No users yet.'}
           </p>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-gray-100 dark:border-gray-700">
+                <tr className="border-b border-gray-100 dark:border-zinc-700">
                   <th className="px-5 py-3 text-left   text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[32%]">User</th>
                   <th className="px-4 py-3 text-left   text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[10%]">Role</th>
                   <th className="px-4 py-3 text-left   text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[20%]">Trainer</th>
@@ -188,7 +188,7 @@ export default function AllUsersPage() {
                   <th className="px-5 py-3 text-right  text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[16%]">Trend</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60">
+              <tbody className="divide-y divide-gray-100 dark:divide-zinc-700/60">
                 {filtered.map(u => (
                   <UserRow key={u.user_id} user={u} onClick={() => setSelectedUser(toGymClient(u))} />
                 ))}
@@ -216,20 +216,20 @@ function UserRow({ user, onClick }: { user: AdminUser; onClick: () => void }) {
   return (
     <tr
       onClick={onClick}
-      className="hover:bg-purple-50/40 dark:hover:bg-purple-900/10 cursor-pointer transition-colors group"
+      className="hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 cursor-pointer transition-colors group"
     >
       {/* User */}
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-3">
           <span className={`w-9 h-9 rounded-full text-xs font-bold flex items-center justify-center shrink-0 select-none ${
             isTrainer
-              ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
+              ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
               : 'bg-blue-100   dark:bg-blue-900/40   text-blue-700   dark:text-blue-300'
           }`}>
             {initials}
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors">
               {displayName}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
@@ -244,7 +244,7 @@ function UserRow({ user, onClick }: { user: AdminUser; onClick: () => void }) {
       {/* Role */}
       <td className="px-4 py-3.5">
         {isTrainer ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
             Trainer
           </span>
         ) : (
@@ -309,8 +309,8 @@ function UserRow({ user, onClick }: { user: AdminUser; onClick: () => void }) {
 
 // ── SummaryChip ───────────────────────────────────────────────────────────────
 
-function SummaryChip({ label, value, color }: { label: string; value: string; color?: 'purple' | 'green' | 'amber' }) {
-  const cls = color === 'purple' ? 'text-purple-600 dark:text-purple-400'
+function SummaryChip({ label, value, color }: { label: string; value: string; color?: 'indigo' | 'green' | 'amber' }) {
+  const cls = color === 'indigo' ? 'text-indigo-600 dark:text-indigo-400'
             : color === 'green'  ? 'text-green-600  dark:text-green-400'
             : color === 'amber'  ? 'text-amber-500  dark:text-amber-400'
             : 'text-gray-700 dark:text-gray-300';

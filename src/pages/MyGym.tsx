@@ -136,11 +136,11 @@ export default function MyGym() {
   // ── Render: no trainer ─────────────────────────────────────────────────────
   if (!isAdmin && !profile?.admin_id) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-20 text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-            <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+            <svg className="w-8 h-8 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -162,7 +162,7 @@ export default function MyGym() {
   // ── Render: trainer view (+ hybrid "My Trainer" tab) ──────────────────────
   if (isTrainerView) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
         <Navbar />
         <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
 
@@ -188,12 +188,17 @@ export default function MyGym() {
           {/* ── My Gym (trainer) tab ── */}
           {!showingClientView && (
             <>
-              <div className="flex items-start justify-between gap-4">
-                <div>
+              {error && (
+                <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950 rounded-xl px-4 py-3">{error}</p>
+              )}
+
+              {/* Gradient header band + map */}
+              <div className="rounded-2xl overflow-hidden shadow-sm">
+                <div className="bg-gradient-to-br from-indigo-600 to-violet-700 px-6 pt-5 pb-5">
                   {isSuperAdminDrilldown && (
                     <button
                       onClick={() => navigate('/admin/gyms')}
-                      className="text-xs text-purple-600 dark:text-purple-400 hover:underline mb-2 flex items-center gap-1"
+                      className="text-xs text-indigo-200 hover:text-white mb-3 flex items-center gap-1 transition"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -201,33 +206,36 @@ export default function MyGym() {
                       All Gyms
                     </button>
                   )}
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{gymName}</h1>
-                  {trainerDisplayName && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Trainer: {trainerDisplayName}</p>
-                  )}
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-indigo-200 text-[11px] font-semibold uppercase tracking-widest mb-1">
+                        {isSuperAdminDrilldown ? 'Trainer Gym' : 'Your Gym'}
+                      </p>
+                      <h1 className="text-xl font-bold text-white">{gymName}</h1>
+                      {trainerDisplayName && (
+                        <p className="text-indigo-200 text-sm mt-0.5">Trainer: {trainerDisplayName}</p>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-3xl font-extrabold text-white leading-none">{clients.length}</p>
+                      <p className="text-indigo-200 text-xs mt-0.5">client{clients.length !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-extrabold text-purple-600 dark:text-purple-400">{clients.length}</p>
-                  <p className="text-xs text-gray-400">client{clients.length !== 1 ? 's' : ''}</p>
-                </div>
+                <GymMap
+                  center={gymCenter}
+                  zoom={14}
+                  interactive={false}
+                  height={260}
+                  className="!rounded-none !border-0"
+                  markers={gymCenter ? [{
+                    id: 'gym',
+                    position: gymCenter,
+                    label: gymName,
+                    subLabel: `${clients.length} client${clients.length !== 1 ? 's' : ''}`,
+                  }] : []}
+                />
               </div>
-
-              {error && (
-                <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950 rounded-xl px-4 py-3">{error}</p>
-              )}
-
-              <GymMap
-                center={gymCenter}
-                zoom={14}
-                interactive={false}
-                height={280}
-                markers={gymCenter ? [{
-                  id: 'gym',
-                  position: gymCenter,
-                  label: gymName,
-                  subLabel: `${clients.length} client${clients.length !== 1 ? 's' : ''}`,
-                }] : []}
-              />
 
               <div className="space-y-3">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
@@ -260,7 +268,7 @@ export default function MyGym() {
 
               {isLoadingGym ? (
                 <div className="flex justify-center py-16">
-                  <div className="w-7 h-7 rounded-full border-4 border-purple-500 border-t-transparent animate-spin" />
+                  <div className="w-7 h-7 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
                 </div>
               ) : (
                 <>
@@ -278,7 +286,7 @@ export default function MyGym() {
                   />
 
                   {trainerGym && (
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
+                    <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-base font-bold text-gray-900 dark:text-white">
@@ -292,7 +300,7 @@ export default function MyGym() {
                         </div>
                         <div className="text-right">
                           <p className="text-xs text-gray-400 dark:text-gray-500">Member since</p>
-                          <p className="text-sm font-semibold text-purple-600 dark:text-purple-400">{joinedAgo}</p>
+                          <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{joinedAgo}</p>
                         </div>
                       </div>
                     </div>
@@ -312,7 +320,7 @@ export default function MyGym() {
 
   // ── Render: client view (non-admin users with a trainer) ───────────────────
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
@@ -331,7 +339,7 @@ export default function MyGym() {
 
         {isLoadingGym ? (
           <div className="flex justify-center py-16">
-            <div className="w-7 h-7 rounded-full border-4 border-purple-500 border-t-transparent animate-spin" />
+            <div className="w-7 h-7 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
           </div>
         ) : (
           <>
@@ -349,7 +357,7 @@ export default function MyGym() {
             />
 
             {trainerGym && (
-              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
+              <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-base font-bold text-gray-900 dark:text-white">
@@ -363,7 +371,7 @@ export default function MyGym() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-gray-400 dark:text-gray-500">Member since</p>
-                    <p className="text-sm font-semibold text-purple-600 dark:text-purple-400">{joinedAgo}</p>
+                    <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{joinedAgo}</p>
                   </div>
                 </div>
               </div>

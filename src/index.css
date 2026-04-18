@@ -60,3 +60,32 @@ input[type="number"] {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #818cf8; /* indigo-400 */
 }
+
+/* ── Gym map tooltip ───────────────────────────────────────────────────────── */
+.leaflet-tooltip.gym-map-tooltip {
+  background: #18181b;        /* zinc-900 */
+  border: 1px solid #4338ca; /* indigo-700 */
+  border-radius: 10px;
+  padding: 6px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: none;
+}
+.leaflet-tooltip.gym-map-tooltip::before {
+  border-top-color: #4338ca !important;
+}
+.gym-map-tooltip__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+.gym-map-tooltip__sub {
+  display: block;
+  font-size: 11px;
+  color: #a5b4fc; /* indigo-300 */
+  white-space: nowrap;
+}

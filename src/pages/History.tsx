@@ -11,11 +11,11 @@ import type { ScoreBreakdown } from "../utils/calculateScore";
 
 // ── Category styles ───────────────────────────────────────────────────────────
 
-const CATEGORY_STYLES: Record<string, { color: string; badge: string }> = {
-  Excellent:           { color: "text-green-500 dark:text-green-400",  badge: "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300" },
-  Good:                { color: "text-blue-600 dark:text-blue-400",    badge: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300" },
-  Average:             { color: "text-amber-500 dark:text-amber-400",  badge: "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300" },
-  "Needs Improvement": { color: "text-red-500 dark:text-red-400",      badge: "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300" },
+const CATEGORY_STYLES: Record<string, { color: string; badge: string; border: string; dot: string }> = {
+  Excellent:           { color: "text-green-500 dark:text-green-400",   badge: "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300",   border: "border-l-green-500/70",  dot: "bg-green-500"  },
+  Good:                { color: "text-indigo-500 dark:text-indigo-400", badge: "bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300", border: "border-l-indigo-500/70", dot: "bg-indigo-500" },
+  Average:             { color: "text-amber-500 dark:text-amber-400",   badge: "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300",   border: "border-l-amber-500/70",  dot: "bg-amber-500"  },
+  "Needs Improvement": { color: "text-red-500 dark:text-red-400",       badge: "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300",           border: "border-l-red-500/70",    dot: "bg-red-500"    },
 };
 const FALLBACK_STYLE = CATEGORY_STYLES["Good"];
 
@@ -88,7 +88,7 @@ function AssessmentCard({
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 flex gap-5 items-start group">
+      <div className={`bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-700 shadow-sm p-5 flex gap-5 items-start group border-l-4 ${style.border}`}>
         {/* Score circle */}
         <div className="shrink-0 flex flex-col items-center gap-1.5">
           <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${style.color} border-current`}>
@@ -143,9 +143,9 @@ function AssessmentCard({
                       {s}<span className="text-gray-400">/{max}</span>
                     </span>
                   </div>
-                  <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
                     <div
-                      className="h-1.5 bg-blue-500 rounded-full"
+                      className="h-1.5 bg-indigo-500 rounded-full"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -252,7 +252,7 @@ export default function History() {
   const delta  = latest !== undefined && prev !== undefined ? latest - prev : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Navbar />
 
       <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">
@@ -271,7 +271,7 @@ export default function History() {
             </button>
             <button
               onClick={() => navigate("/assessment")}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition"
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition"
             >
               New Assessment
             </button>
@@ -280,7 +280,7 @@ export default function History() {
 
         {/* Score trend card */}
         {!loading && chartData.length >= 2 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-700 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Score Trend
@@ -316,7 +316,7 @@ export default function History() {
         {/* List */}
         {loading ? (
           <div className="flex justify-center py-16">
-            <div className="w-8 h-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
+            <div className="w-8 h-8 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
           </div>
         ) : assessments.length === 0 ? (
           <div className="text-center py-16">
@@ -328,10 +328,18 @@ export default function History() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {assessments.map((a) => (
-              <AssessmentCard key={a.id} a={a} onDelete={handleDelete} />
-            ))}
+          <div className="relative space-y-4 pl-8">
+            {/* Timeline spine */}
+            <div className="absolute left-[15px] top-8 bottom-8 w-0.5 bg-gray-200 dark:bg-zinc-700/60 pointer-events-none" />
+            {assessments.map((a) => {
+              const dot = (CATEGORY_STYLES[a.category] ?? FALLBACK_STYLE).dot;
+              return (
+                <div key={a.id} className="relative">
+                  <div className={`absolute -left-[17px] top-6 w-3 h-3 rounded-full ring-2 ring-zinc-50 dark:ring-zinc-950 z-10 ${dot}`} />
+                  <AssessmentCard a={a} onDelete={handleDelete} />
+                </div>
+              );
+            })}
           </div>
         )}
 

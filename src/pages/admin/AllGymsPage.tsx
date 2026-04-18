@@ -64,7 +64,7 @@ export default function AllGymsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Navbar />
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
 
@@ -78,7 +78,7 @@ export default function AllGymsPage() {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <p className="text-2xl font-extrabold text-purple-600 dark:text-purple-400">
+              <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">
                 {gyms.reduce((s, g) => s + g.client_count, 0)}
               </p>
               <p className="text-xs text-gray-400">total clients</p>
@@ -92,14 +92,14 @@ export default function AllGymsPage() {
 
         {loading ? (
           <div className="flex justify-center py-16">
-            <div className="w-7 h-7 rounded-full border-4 border-purple-500 border-t-transparent animate-spin" />
+            <div className="w-7 h-7 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
           </div>
         ) : (
           <>
             {/* Interactive map */}
             <GymMap
               center={mapCenter}
-              zoom={markers.length > 1 ? 5 : 13}
+              zoom={13}
               interactive
               markers={markers}
               activeMarkerId={activeId ?? undefined}
@@ -116,7 +116,7 @@ export default function AllGymsPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search trainers or gyms…"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             />
 
             {/* Trainer cards */}
@@ -165,14 +165,14 @@ function GymCard({
       onClick={onClick}
       onMouseEnter={() => onHover(gym.trainer_id)}
       onMouseLeave={() => onHover(null)}
-      className={`w-full text-left rounded-2xl border p-5 flex flex-col gap-3 transition-all duration-150 bg-white dark:bg-gray-800 ${
+      className={`w-full text-left rounded-2xl border p-5 flex flex-col gap-3 transition-all duration-150 bg-white dark:bg-zinc-900 ${
         isActive
-          ? 'border-purple-400 dark:border-purple-600 shadow-lg ring-2 ring-purple-200 dark:ring-purple-900'
-          : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md'
+          ? 'border-indigo-400 dark:border-indigo-600 shadow-lg ring-2 ring-indigo-200 dark:ring-indigo-900'
+          : 'border-gray-200 dark:border-zinc-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md'
       }`}
     >
       <div className="flex items-center gap-3">
-        <span className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-sm font-bold flex items-center justify-center shrink-0 select-none">
+        <span className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-sm font-bold flex items-center justify-center shrink-0 select-none">
           {initials}
         </span>
         <div className="flex-1 min-w-0">
@@ -188,7 +188,7 @@ function GymCard({
         </svg>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-zinc-700">
         <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -196,7 +196,7 @@ function GymCard({
           </svg>
           {gym.gym_name ?? 'No gym name'}
         </div>
-        <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">
+        <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
           {gym.client_count} client{gym.client_count !== 1 ? 's' : ''}
         </span>
       </div>

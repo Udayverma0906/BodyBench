@@ -49,9 +49,9 @@ function TrainerCard({
     .split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 flex flex-col gap-3">
+    <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <span className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-sm font-bold flex items-center justify-center shrink-0 select-none">
+        <span className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-sm font-bold flex items-center justify-center shrink-0 select-none">
           {initials}
         </span>
         <div className="flex-1 min-w-0">
@@ -132,10 +132,10 @@ function RequestCard({
     .slice(0, 2);
 
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 flex flex-col gap-4">
+    <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <span className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-sm font-bold flex items-center justify-center shrink-0 select-none">
+        <span className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-sm font-bold flex items-center justify-center shrink-0 select-none">
           {initials}
         </span>
         <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ function RequestCard({
           <button
             onClick={() => handle("approve")}
             disabled={!!busy}
-            className="flex-1 py-2 rounded-xl text-sm font-semibold bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white transition"
+            className="flex-1 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white transition"
           >
             {busy === "approve" ? "Approving…" : "Approve"}
           </button>
@@ -254,7 +254,7 @@ export default function TrainerRequestsPage() {
   const resolved = requests.filter(r => r.status !== "pending");
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 transition-colors">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors">
       <Navbar />
 
       <main className="max-w-2xl mx-auto px-4 py-10 space-y-10">
@@ -283,7 +283,7 @@ export default function TrainerRequestsPage() {
         {/* Loading */}
         {loading && (
           <div className="flex justify-center py-16">
-            <div className="w-7 h-7 rounded-full border-4 border-purple-500 border-t-transparent animate-spin" />
+            <div className="w-7 h-7 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
           </div>
         )}
 
