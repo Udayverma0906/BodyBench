@@ -130,7 +130,7 @@ export default function Login() {
   if (loading) return null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-amber-50/60 via-stone-50/40 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
 
       {/* Minimal top bar */}
       <div className="w-full px-6 py-4 flex justify-between items-center">

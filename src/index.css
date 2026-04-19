@@ -28,6 +28,24 @@ input[type="number"] {
   appearance: textfield;
 }
 
+/* ── Warm light mode palette ─────────────────────────────────────────────────
+   Replaces clinical cold-white with warm cream so light mode isn't a
+   bright-bulb shock. Only active when .dark is NOT on <html>.
+   Dark mode is unaffected because it never uses bg-white / bg-gray-50
+   for the light state — it uses dark: variants.              */
+:root:not(.dark) {
+  --color-white:    #FFFEF9;   /* warm cream instead of #fff         */
+  --color-gray-50:  #FAF8F2;   /* warm off-white page backgrounds     */
+  --color-gray-100: #F2EDE3;   /* warm card / section backgrounds     */
+  --color-gray-200: #E6DDD2;   /* warm borders                        */
+  --color-gray-300: #D7CCBF;   /* warm dividers                       */
+  --color-slate-50: #FAF8F2;   /* Login / page gradients              */
+  --color-slate-100:#F2EDE3;
+  --color-zinc-50:  #FAF8F2;   /* SettingsPage bg                     */
+  --color-zinc-100: #F2EDE3;
+  --color-zinc-200: #E6DDD2;
+}
+
 /* ── Custom scrollbar (WebKit) ─────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
@@ -35,12 +53,12 @@ input[type="number"] {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9; /* slate-100 */
+  background: #f2ede3; /* warm instead of slate-100 */
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1; /* slate-300 */
+  background: #d7ccbf; /* warm slate-300 */
   border-radius: 999px;
 }
 

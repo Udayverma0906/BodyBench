@@ -188,6 +188,21 @@ function AssessmentCard({
   );
 }
 
+// ── Group assessments by Month Year ──────────────────────────────────────────
+
+const monthFmt = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
+
+function groupByMonth(items: Assessment[]): { label: string; items: Assessment[] }[] {
+  const map = new Map<string, Assessment[]>();
+  for (const a of items) {
+    const key = monthFmt.format(new Date(a.taken_at));
+    const bucket = map.get(key) ?? [];
+    bucket.push(a);
+    map.set(key, bucket);
+  }
+  return Array.from(map.entries()).map(([label, items]) => ({ label, items }));
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function History() {
@@ -328,18 +343,17 @@ export default function History() {
             </p>
           </div>
         ) : (
-          <div className="relative space-y-4 pl-8">
-            {/* Timeline spine */}
-            <div className="absolute left-[15px] top-8 bottom-8 w-0.5 bg-gray-200 dark:bg-zinc-700/60 pointer-events-none" />
-            {assessments.map((a) => {
-              const dot = (CATEGORY_STYLES[a.category] ?? FALLBACK_STYLE).dot;
-              return (
-                <div key={a.id} className="relative">
-                  <div className={`absolute -left-[17px] top-6 w-3 h-3 rounded-full ring-2 ring-zinc-50 dark:ring-zinc-950 z-10 ${dot}`} />
-                  <AssessmentCard a={a} onDelete={handleDelete} />
-                </div>
-              );
-            })}
+          <div className="space-y-6">
+            {groupByMonth(assessments).map(({ label, items }) => (
+              <div key={label} className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 px-1">
+                  {label}
+                </p>
+                {items.map((a) => (
+                  <AssessmentCard key={a.id} a={a} onDelete={handleDelete} />
+                ))}
+              </div>
+            ))}
           </div>
         )}
 
