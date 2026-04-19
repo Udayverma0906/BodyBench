@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -203,6 +203,28 @@ function groupByMonth(items: Assessment[]): { label: string; items: Assessment[]
   return Array.from(map.entries()).map(([label, items]) => ({ label, items }));
 }
 
+// ── Pagination ────────────────────────────────────────────────────────────────
+
+const PAGE_SIZE = 5;
+
+function ChevronLeft() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+function ChevronRight() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function History() {
@@ -211,6 +233,8 @@ export default function History() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleted, setShowDeleted] = useState(false);
+  const [page, setPage] = useState(1);
+  const listTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -255,6 +279,20 @@ export default function History() {
         (a, b) => new Date(b.taken_at).getTime() - new Date(a.taken_at).getTime()
       )
     );
+  };
+
+  // Clamp page when the list shrinks (e.g. after a delete)
+  useEffect(() => {
+    const total = Math.max(1, Math.ceil(assessments.length / PAGE_SIZE));
+    if (page > total) setPage(total);
+  }, [assessments.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const totalPages  = Math.max(1, Math.ceil(assessments.length / PAGE_SIZE));
+  const pageItems   = assessments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const goToPage = (next: number) => {
+    setPage(next);
+    listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   // Map to TrendChart's data format (oldest → newest)
@@ -329,6 +367,7 @@ export default function History() {
         )}
 
         {/* List */}
+        <div ref={listTopRef} />
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
@@ -343,18 +382,64 @@ export default function History() {
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {groupByMonth(assessments).map(({ label, items }) => (
-              <div key={label} className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 px-1">
-                  {label}
+          <>
+            <div className="space-y-6">
+              {groupByMonth(pageItems).map(({ label, items }) => (
+                <div key={label} className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 px-1">
+                    {label}
+                  </p>
+                  {items.map((a) => (
+                    <AssessmentCard key={a.id} a={a} onDelete={handleDelete} />
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, assessments.length)} of {assessments.length}
                 </p>
-                {items.map((a) => (
-                  <AssessmentCard key={a.id} a={a} onDelete={handleDelete} />
-                ))}
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => goToPage(page - 1)}
+                    disabled={page === 1}
+                    aria-label="Previous page"
+                    className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  >
+                    <ChevronLeft />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => goToPage(p)}
+                      className={[
+                        "w-7 h-7 rounded-lg text-xs font-semibold transition",
+                        p === page
+                          ? "bg-indigo-600 text-white"
+                          : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800",
+                      ].join(" ")}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => goToPage(page + 1)}
+                    disabled={page === totalPages}
+                    aria-label="Next page"
+                    className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  >
+                    <ChevronRight />
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
 
       </div>

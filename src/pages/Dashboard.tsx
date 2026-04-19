@@ -1,24 +1,61 @@
+import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/layout/Navbar";
 import DashboardGrid from "../components/dashboard/DashboardGrid";
 import StatWidget from "../components/dashboard/widgets/StatWidget";
 import TrendWidget from "../components/dashboard/widgets/TrendWidget";
 import BarWidget from "../components/dashboard/widgets/BarWidget";
-import { useDashboardData } from "../hooks/useDashboardData";
+import { useDashboardData, type DateRange } from "../hooks/useDashboardData";
+
+// ── Date range picker ─────────────────────────────────────────────────────────
+
+const DATE_RANGES: { label: string; value: DateRange }[] = [
+  { label: "Today",   value: "today" },
+  { label: "1 Week",  value: "7d"    },
+  { label: "30 Days", value: "30d"   },
+  { label: "90 Days", value: "90d"   },
+];
+
+function DateRangePicker({
+  value,
+  onChange,
+}: {
+  value: DateRange;
+  onChange: (v: DateRange) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-800 rounded-xl p-1">
+      {DATE_RANGES.map(({ label, value: v }) => (
+        <button
+          key={v}
+          onClick={() => onChange(v)}
+          className={[
+            "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+            value === v
+              ? "bg-white dark:bg-zinc-700 text-gray-900 dark:text-white shadow-sm"
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200",
+          ].join(" ")}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const data = useDashboardData(user?.id ?? "");
+  const [dateRange, setDateRange] = useState<DateRange>("30d");
+  const data = useDashboardData(user?.id ?? "", false, dateRange);
 
   const { loading, totalAssessments, latestScore, bestScore, avgScore } = data;
 
-  // Delta: latest vs previous is computed from the time-series
   const series = data.scoreTimeSeries;
   const prevScore = series.length >= 2 ? series[series.length - 2].value : null;
   const latestDelta =
-    latestScore !== null && prevScore !== null
-      ? latestScore - prevScore
-      : null;
+    latestScore !== null && prevScore !== null ? latestScore - prevScore : null;
 
   const bmiSeries = data.bmiTimeSeries;
   const latestBmi = bmiSeries.length > 0 ? bmiSeries[bmiSeries.length - 1].value : null;
@@ -30,11 +67,14 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-6">
 
         {/* Page header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Your fitness at a glance
-          </p>
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Your fitness at a glance
+            </p>
+          </div>
+          <DateRangePicker value={dateRange} onChange={setDateRange} />
         </div>
 
         <DashboardGrid>
@@ -122,7 +162,7 @@ export default function Dashboard() {
 
           <BarWidget
             title="Avg Score by Metric"
-            subtitle="Percentage of max points per category, averaged across all assessments"
+            subtitle="Percentage of max points per category, averaged across selected period"
             loading={loading}
             data={data.avgBreakdown}
             colSpan={4}

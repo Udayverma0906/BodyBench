@@ -4,6 +4,24 @@ import type { Assessment } from "../types/database";
 import type { ScoreBreakdown } from "../utils/calculateScore";
 import type { TimeSeriesPoint, CategoryPoint } from "../types/widget";
 
+// ── Date range ────────────────────────────────────────────────────────────────
+
+export type DateRange = "today" | "7d" | "30d" | "90d";
+
+export function dateRangeToISO(range: DateRange): string {
+  const now = new Date();
+  switch (range) {
+    case "today": {
+      const d = new Date(now);
+      d.setHours(0, 0, 0, 0);
+      return d.toISOString();
+    }
+    case "7d":  return new Date(now.getTime() -  7 * 86_400_000).toISOString();
+    case "30d": return new Date(now.getTime() - 30 * 86_400_000).toISOString();
+    case "90d": return new Date(now.getTime() - 90 * 86_400_000).toISOString();
+  }
+}
+
 // ── Output shape ──────────────────────────────────────────────────────────────
 
 export interface DashboardData {
@@ -40,33 +58,45 @@ const EMPTY: DashboardData = {
  * useDashboardData — fetches all active assessments for a user and returns
  * pre-computed slices ready to pass directly into dashboard widgets.
  *
- * @param userId   The user whose assessments to load.
- * @param useRpc   When true, fetches via get_client_assessments() SECURITY DEFINER
- *                 RPC instead of a direct table query. Required when the caller is
- *                 a trainer or superadmin viewing another user's data (RLS blocks
- *                 cross-user direct table access).
+ * @param userId     The user whose assessments to load.
+ * @param useRpc     When true, uses get_client_assessments() RPC (trainer/admin view).
+ * @param dateRange  Optional range filter: 'today' | '7d' | '30d' | '90d'.
+ *                   When omitted, all assessments are included.
  *
  * Usage:
- *   const data = useDashboardData(user.id);           // own dashboard
- *   const data = useDashboardData(client.id, true);   // trainer viewing client
+ *   const data = useDashboardData(user.id);                    // own dashboard, all time
+ *   const data = useDashboardData(user.id, false, '30d');      // own dashboard, last 30 days
+ *   const data = useDashboardData(client.id, true);            // trainer viewing client
  */
-export function useDashboardData(userId: string, useRpc = false): DashboardData {
+export function useDashboardData(
+  userId: string,
+  useRpc = false,
+  dateRange?: DateRange,
+): DashboardData {
   const [state, setState] = useState<DashboardData>(EMPTY);
 
   useEffect(() => {
     if (!userId) return;
 
     let active = true;
-    setState(EMPTY); // reset on user change
+    setState(EMPTY);
 
-    const query = useRpc
-      ? supabase.rpc("get_client_assessments", { p_user_id: userId })
-      : supabase
-          .from("assessments")
-          .select("*")
-          .eq("user_id", userId)
-          .eq("is_active", true)
-          .order("taken_at", { ascending: true });
+    const since = dateRange ? dateRangeToISO(dateRange) : undefined;
+
+    // Build query — apply DB-level date filter for direct table queries
+    let query;
+    if (useRpc) {
+      query = supabase.rpc("get_client_assessments", { p_user_id: userId });
+    } else {
+      let q = supabase
+        .from("assessments")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("is_active", true)
+        .order("taken_at", { ascending: true });
+      if (since) q = q.gte("taken_at", since);
+      query = q;
+    }
 
     query.then(({ data, error }) => {
         if (!active) return;
@@ -75,10 +105,15 @@ export function useDashboardData(userId: string, useRpc = false): DashboardData 
           return;
         }
 
-        // RPC returns rows in DB order; sort ascending so time-series is correct
-        const rows = (data as Assessment[]).sort(
+        let rows = (data as Assessment[]).sort(
           (a, b) => a.taken_at.localeCompare(b.taken_at)
         );
+
+        // RPC doesn't support server-side date filtering — apply client-side
+        if (useRpc && since) {
+          rows = rows.filter((r) => r.taken_at >= since);
+        }
+
         if (rows.length === 0) {
           setState({ ...EMPTY, loading: false });
           return;
@@ -114,7 +149,6 @@ export function useDashboardData(userId: string, useRpc = false): DashboardData 
         });
 
         // ── Average breakdown by metric ───────────────────────────────────
-        // Accumulate earned + max per label across all assessments
         const metricAcc: Record<string, { totalEarned: number; totalMax: number; count: number }> = {};
         for (const r of rows) {
           const breakdown = r.breakdown as ScoreBreakdown[];
@@ -128,7 +162,6 @@ export function useDashboardData(userId: string, useRpc = false): DashboardData 
         const avgBreakdown: CategoryPoint[] = Object.entries(metricAcc).map(
           ([label, { totalEarned, totalMax }]) => ({
             label,
-            // Express as a percentage so bars are comparable across metrics with different max
             value: Math.round((totalEarned / totalMax) * 100),
             max: 100,
           })
@@ -148,7 +181,7 @@ export function useDashboardData(userId: string, useRpc = false): DashboardData 
       });
 
     return () => { active = false; };
-  }, [userId, useRpc]);
+  }, [userId, useRpc, dateRange]);
 
   return state;
 }
