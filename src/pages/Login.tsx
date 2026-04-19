@@ -73,7 +73,7 @@ export default function Login() {
   const location = useLocation();
 
   // Where to go after a successful login
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? "/assessment";
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? "/";
 
   const [mode, setMode]               = useState<Mode>("signin");
   const [email, setEmail]             = useState("");

@@ -725,6 +725,14 @@ export default function Navbar({ onBack }: Props) {
           <Link to="/" className="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
             BodyBench
           </Link>
+          {user && (
+            <Link
+              to="/assessment"
+              className="hidden sm:inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition ml-2"
+            >
+              Start Assessment
+            </Link>
+          )}
         </div>
 
         {/* Right — actions */}
