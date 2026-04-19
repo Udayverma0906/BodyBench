@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import UpdatePassword from "./pages/UpdatePassword";
 import Assessment from "./pages/Assessment";
 import Result from "./pages/Result";
 import History from "./pages/History";
@@ -88,6 +89,15 @@ function App() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Redirect to /update-password when Supabase fires the recovery event
+  // (user clicked the reset link in their email)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") navigate("/update-password");
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   const handleSubmit = async (data: AssessmentForm, configs: FieldConfig[]) => {
     const res = calculateScore(data, configs);
 
@@ -125,6 +135,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing onStart={() => navigate("/assessment")} />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/update-password" element={<UpdatePassword />} />
         <Route
           path="/assessment"
           element={

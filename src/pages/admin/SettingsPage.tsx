@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Navbar from '../../components/layout/Navbar';
 import { useConfig, CONFIG_DEFINITIONS } from '../../hooks/useConfig';
 import { useTheme } from '../../context/ThemeContext';
+import { supabase } from '../../lib/supabase';
 import type { ConfigDef } from '../../hooks/useConfig';
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -126,6 +127,87 @@ function SettingRow({
   );
 }
 
+// ── Change Password ───────────────────────────────────────────────────────────
+
+function ChangePasswordSection({ onToast }: { onToast: (d: ToastData) => void }) {
+  const [newPassword, setNewPassword]         = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [saving, setSaving]                   = useState(false);
+
+  const inputCls = "w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition";
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      onToast({ msg: "Passwords don't match.", ok: false });
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setSaving(false);
+    if (error) {
+      onToast({ msg: `Failed: ${error.message}`, ok: false });
+    } else {
+      onToast({ msg: 'Password updated', ok: true });
+      setNewPassword('');
+      setConfirmPassword('');
+    }
+  };
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+        Security
+      </h2>
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-700 px-5 py-5">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Change Password</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          Choose a new password for your account.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-3 max-w-sm">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+              New password
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+              disabled={saving}
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Confirm new password
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+              disabled={saving}
+              className={inputCls}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold transition"
+          >
+            {saving ? 'Updating…' : 'Update Password'}
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -183,21 +265,24 @@ export default function SettingsPage() {
             <div className="w-7 h-7 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
           </div>
         ) : (
-          sections.map(section => (
-            <section key={section} className="space-y-3">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-                {section}
-              </h2>
-              {CONFIG_DEFINITIONS.filter(d => d.section === section).map(def => (
-                <SettingRow
-                  key={def.key}
-                  def={def}
-                  currentValue={get(def.key)}
-                  onSave={handleSave}
-                />
-              ))}
-            </section>
-          ))
+          <>
+            {sections.map(section => (
+              <section key={section} className="space-y-3">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  {section}
+                </h2>
+                {CONFIG_DEFINITIONS.filter(d => d.section === section).map(def => (
+                  <SettingRow
+                    key={def.key}
+                    def={def}
+                    currentValue={get(def.key)}
+                    onSave={handleSave}
+                  />
+                ))}
+              </section>
+            ))}
+            <ChangePasswordSection onToast={setToast} />
+          </>
         )}
       </main>
 

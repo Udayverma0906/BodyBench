@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 
-type Mode = "signin" | "signup";
+type Mode = "signin" | "signup" | "forgot";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -82,6 +82,7 @@ export default function Login() {
   const [error, setError]             = useState<string | null>(null);
   const [submitting, setSubmitting]   = useState(false);
   const [signupDone, setSignupDone]   = useState(false);
+  const [forgotDone, setForgotDone]   = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -121,10 +122,23 @@ export default function Login() {
     }
   };
 
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/update-password`,
+    });
+    setSubmitting(false);
+    if (error) setError(error.message);
+    else setForgotDone(true);
+  };
+
   const switchMode = (next: Mode) => {
     setMode(next);
     setError(null);
     setFullName('');
+    setForgotDone(false);
   };
 
   if (loading) return null;
@@ -153,20 +167,22 @@ export default function Login() {
           {/* Heading */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">
-              {mode === "signin" ? "Welcome back" : "Create account"}
+              {mode === "forgot" ? "Reset password" : mode === "signin" ? "Welcome back" : "Create account"}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {mode === "signin"
-                ? "Sign in to track your fitness progress"
-                : "Start tracking your fitness today"}
+              {mode === "forgot"
+                ? "Enter your email and we'll send a reset link"
+                : mode === "signin"
+                  ? "Sign in to track your fitness progress"
+                  : "Start tracking your fitness today"}
             </p>
           </div>
 
           {/* Card */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-xl p-8">
 
+            {/* ── Post-signup confirmation ── */}
             {signupDone ? (
-              /* Post-signup confirmation */
               <div className="text-center space-y-3 py-2">
                 <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center mx-auto mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
@@ -187,6 +203,73 @@ export default function Login() {
                   Back to sign in
                 </button>
               </div>
+
+            /* ── Post-forgot confirmation ── */
+            ) : forgotDone ? (
+              <div className="text-center space-y-3 py-2">
+                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center mx-auto mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    className="text-blue-600 dark:text-blue-400">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                </div>
+                <p className="font-semibold text-gray-900 dark:text-white">Check your inbox</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  We sent a reset link to <span className="font-medium text-gray-700 dark:text-gray-300">{email}</span>.
+                  Click it to set a new password.
+                </p>
+                <button
+                  onClick={() => switchMode("signin")}
+                  className="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline mt-2 inline-block"
+                >
+                  Back to sign in
+                </button>
+              </div>
+
+            /* ── Forgot password form ── */
+            ) : mode === "forgot" ? (
+              <form onSubmit={handleForgot} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    autoFocus
+                    className={inputClass}
+                  />
+                </div>
+
+                {error && (
+                  <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold text-sm transition"
+                >
+                  {submitting ? "Sending…" : "Send Reset Link"}
+                </button>
+
+                <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => switchMode("signin")}
+                    className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
+                  >
+                    ← Back to sign in
+                  </button>
+                </p>
+              </form>
+
+            /* ── Sign in / Sign up forms ── */
             ) : (
               <>
                 {/* OAuth buttons */}
@@ -245,9 +328,20 @@ export default function Login() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                      Password
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Password
+                      </label>
+                      {mode === "signin" && (
+                        <button
+                          type="button"
+                          onClick={() => switchMode("forgot")}
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="password"
                       value={password}
