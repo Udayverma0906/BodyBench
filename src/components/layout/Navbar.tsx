@@ -64,6 +64,27 @@ function InfoIcon() {
   );
 }
 
+function HamburgerIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
 function ExternalLinkIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
@@ -671,6 +692,8 @@ export default function Navbar({ onBack }: Props) {
   const [showProfile, setShowProfile] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
 
   // Fetch + real-time sync of pending trainer request count — superadmin only
   useEffect(() => {
@@ -710,145 +733,248 @@ export default function Navbar({ onBack }: Props) {
 
   return (
     <>
-      <nav className="sticky top-0 w-full px-6 py-4 flex justify-between items-center bg-white/75 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-black/[0.06] dark:border-white/[0.06]" style={{ zIndex: 1050 }}>
-        {/* Left — brand + optional back */}
-        <div className="flex items-center gap-2">
-          {onBack && (
-            <button
-              onClick={onBack}
-              aria-label="Go back"
-              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            >
-              <ChevronLeft />
-            </button>
-          )}
-          <Link to="/" className="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-            BodyBench
-          </Link>
-          {user && (
-            <Link
-              to="/assessment"
-              className="hidden sm:inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition ml-2"
-            >
-              Start Assessment
-            </Link>
-          )}
-        </div>
-
-        {/* Right — actions */}
-        <div className="flex items-center gap-1">
-          {user && (
-            <Link
-              to="/dashboard"
-              className="px-3 py-1.5 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            >
-              Dashboard
-            </Link>
-          )}
-          {user && (
-            <Link
-              to="/history"
-              className="px-3 py-1.5 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            >
-              History
-            </Link>
-          )}
-          {user && (
-            <Link
-              to="/gym"
-              className="px-3 py-1.5 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            >
-              My Gym
-            </Link>
-          )}
-          {isAdmin && (
-            <Link
-              to="/admin/fields"
-              className="px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
-            >
-              Fields
-            </Link>
-          )}
-          {isAdmin && (
-            <Link
-              to="/admin/settings"
-              className="px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
-            >
-              Settings
-            </Link>
-          )}
-          {isSuperAdmin && (
-            <Link
-              to="/admin/gyms"
-              className="px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
-            >
-              Gyms
-            </Link>
-          )}
-          {isSuperAdmin && (
-            <Link
-              to="/admin/users"
-              className="px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
-            >
-              Users
-            </Link>
-          )}
-          {isSuperAdmin && (
-            <Link
-              to="/admin/requests"
-              className="relative px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
-            >
-              Trainers
-              {pendingCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                  {pendingCount}
-                </span>
-              )}
-            </Link>
-          )}
-
-          <button
-            onClick={() => setShowDetails(true)}
-            aria-label="App details"
-            className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-          >
-            <InfoIcon />
-          </button>
-
-          <button
-            onClick={toggle}
-            aria-label="Toggle dark mode"
-            className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-          >
-            {theme === "light" ? <MoonIcon /> : <SunIcon />}
-          </button>
-
-          {/* Auth */}
-          <div className="flex items-center gap-2 ml-1 pl-3 border-l border-gray-200 dark:border-gray-700">
-            {user ? (
+      <nav className="sticky top-0 w-full bg-white/75 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-black/[0.06] dark:border-white/[0.06]" style={{ zIndex: 1050 }}>
+        {/* Main bar */}
+        <div className="px-4 sm:px-6 py-3.5 flex justify-between items-center">
+          {/* Left — brand + optional back */}
+          <div className="flex items-center gap-2">
+            {onBack && (
               <button
-                onClick={() => setShowProfile(true)}
-                aria-label="Your profile"
-                className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-indigo-500 transition focus:outline-none"
+                onClick={onBack}
+                aria-label="Go back"
+                className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
               >
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  <span className="w-full h-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-xs font-bold flex items-center justify-center select-none">
-                    {user.email?.charAt(0).toUpperCase() ?? "U"}
-                  </span>
-                )}
+                <ChevronLeft />
               </button>
-            ) : (
+            )}
+            <Link to="/" className="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
+              BodyBench
+            </Link>
+            {user && (
               <Link
-                to="/login"
-                className="text-sm font-medium px-3 py-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition"
+                to="/assessment"
+                className="hidden md:inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition ml-2"
               >
-                Sign In
+                Start Assessment
               </Link>
             )}
           </div>
+
+          {/* Right — actions */}
+          <div className="flex items-center gap-1">
+            {/* Nav links — desktop only */}
+            {user && (
+              <Link
+                to="/dashboard"
+                className="hidden md:inline-flex px-3 py-1.5 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                Dashboard
+              </Link>
+            )}
+            {user && (
+              <Link
+                to="/history"
+                className="hidden md:inline-flex px-3 py-1.5 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                History
+              </Link>
+            )}
+            {user && (
+              <Link
+                to="/gym"
+                className="hidden md:inline-flex px-3 py-1.5 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                My Gym
+              </Link>
+            )}
+            {isAdmin && (
+              <Link
+                to="/admin/fields"
+                className="hidden md:inline-flex px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+              >
+                Fields
+              </Link>
+            )}
+            {isAdmin && (
+              <Link
+                to="/admin/settings"
+                className="hidden md:inline-flex px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+              >
+                Settings
+              </Link>
+            )}
+            {isSuperAdmin && (
+              <Link
+                to="/admin/gyms"
+                className="hidden md:inline-flex px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+              >
+                Gyms
+              </Link>
+            )}
+            {isSuperAdmin && (
+              <Link
+                to="/admin/users"
+                className="hidden md:inline-flex px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+              >
+                Users
+              </Link>
+            )}
+            {isSuperAdmin && (
+              <Link
+                to="/admin/requests"
+                className="relative hidden md:inline-flex px-3 py-1.5 text-sm font-medium rounded-lg text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+              >
+                Trainers
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {pendingCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            <button
+              onClick={() => setShowDetails(true)}
+              aria-label="App details"
+              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              <InfoIcon />
+            </button>
+
+            <button
+              onClick={toggle}
+              aria-label="Toggle dark mode"
+              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              {theme === "light" ? <MoonIcon /> : <SunIcon />}
+            </button>
+
+            {/* Auth */}
+            <div className="flex items-center gap-2 ml-1 pl-3 border-l border-gray-200 dark:border-gray-700">
+              {user ? (
+                <button
+                  onClick={() => setShowProfile(true)}
+                  aria-label="Your profile"
+                  className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-indigo-500 transition focus:outline-none"
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <span className="w-full h-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-xs font-bold flex items-center justify-center select-none">
+                      {user.email?.charAt(0).toUpperCase() ?? "U"}
+                    </span>
+                  )}
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="text-sm font-medium px-3 py-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition"
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
+
+            {/* Hamburger — mobile only */}
+            {user && (
+              <button
+                onClick={() => setMenuOpen(o => !o)}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                className="md:hidden ml-1 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                {menuOpen ? <XIcon /> : <HamburgerIcon />}
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Mobile menu */}
+        {menuOpen && (
+          <div className="md:hidden border-t border-black/[0.06] dark:border-white/[0.06] px-3 pt-2 pb-3 space-y-0.5 bg-white/95 dark:bg-zinc-950/95">
+            <Link
+              to="/assessment"
+              onClick={closeMenu}
+              className="flex items-center justify-center px-4 py-2.5 mb-2 text-sm font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition"
+            >
+              Start Assessment
+            </Link>
+
+            <Link
+              to="/dashboard"
+              onClick={closeMenu}
+              className="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              Dashboard
+            </Link>
+            <Link
+              to="/history"
+              onClick={closeMenu}
+              className="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              History
+            </Link>
+            <Link
+              to="/gym"
+              onClick={closeMenu}
+              className="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              My Gym
+            </Link>
+
+            {isAdmin && (
+              <>
+                <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  Admin
+                </p>
+                <Link
+                  to="/admin/fields"
+                  onClick={closeMenu}
+                  className="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+                >
+                  Fields
+                </Link>
+                <Link
+                  to="/admin/settings"
+                  onClick={closeMenu}
+                  className="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+                >
+                  Settings
+                </Link>
+              </>
+            )}
+
+            {isSuperAdmin && (
+              <>
+                <Link
+                  to="/admin/gyms"
+                  onClick={closeMenu}
+                  className="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+                >
+                  Gyms
+                </Link>
+                <Link
+                  to="/admin/users"
+                  onClick={closeMenu}
+                  className="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+                >
+                  Users
+                </Link>
+                <Link
+                  to="/admin/requests"
+                  onClick={closeMenu}
+                  className="flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-xl text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950 transition"
+                >
+                  Trainers
+                  {pendingCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {pendingCount}
+                    </span>
+                  )}
+                </Link>
+              </>
+            )}
+          </div>
+        )}
       </nav>
 
       {/* Profile popup */}
