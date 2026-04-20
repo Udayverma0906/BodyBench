@@ -133,7 +133,7 @@ export default function AllUsersPage() {
               {users.length} account{users.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center flex-wrap gap-4 sm:gap-6">
             <SummaryChip label="With trainer"  value={String(withTrainer)}   color="indigo" />
             <SummaryChip label="Trainers"       value={String(trainerCount)}  color="amber"  />
             <SummaryChip label="Unassigned"     value={String(users.filter(u => !u.trainer_id && u.user_role === 'user').length)} />
@@ -176,25 +176,35 @@ export default function AllUsersPage() {
             {search || trainerFilter !== 'all' ? 'No users match your filters.' : 'No users yet.'}
           </p>
         ) : (
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 dark:border-zinc-700">
-                  <th className="px-5 py-3 text-left   text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[32%]">User</th>
-                  <th className="px-4 py-3 text-left   text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[10%]">Role</th>
-                  <th className="px-4 py-3 text-left   text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[20%]">Trainer</th>
-                  <th className="px-4 py-3 text-right  text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[12%]">Score</th>
-                  <th className="px-4 py-3 text-right  text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[10%]">BMI</th>
-                  <th className="px-5 py-3 text-right  text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[16%]">Trend</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-zinc-700/60">
-                {filtered.map(u => (
-                  <UserRow key={u.user_id} user={u} onClick={() => setSelectedUser(toGymClient(u))} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-zinc-700">
+                    <th className="px-5 py-3 text-left   text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[32%]">User</th>
+                    <th className="px-4 py-3 text-left   text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[10%]">Role</th>
+                    <th className="px-4 py-3 text-left   text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[20%]">Trainer</th>
+                    <th className="px-4 py-3 text-right  text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[12%]">Score</th>
+                    <th className="px-4 py-3 text-right  text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[10%]">BMI</th>
+                    <th className="px-5 py-3 text-right  text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-[16%]">Trend</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-zinc-700/60">
+                  {filtered.map(u => (
+                    <UserRow key={u.user_id} user={u} onClick={() => setSelectedUser(toGymClient(u))} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {filtered.map(u => (
+                <UserCard key={u.user_id} user={u} onClick={() => setSelectedUser(toGymClient(u))} />
+              ))}
+            </div>
+          </>
         )}
       </main>
 
@@ -304,6 +314,89 @@ function UserRow({ user, onClick }: { user: AdminUser; onClick: () => void }) {
         </div>
       </td>
     </tr>
+  );
+}
+
+// ── UserCard (mobile) ─────────────────────────────────────────────────────────
+
+function UserCard({ user, onClick }: { user: AdminUser; onClick: () => void }) {
+  const displayName  = user.full_name ?? user.email.split('@')[0];
+  const initials     = displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+  const catStyle     = CATEGORY_STYLE[user.latest_category ?? ''] ?? CATEGORY_STYLE.Fair;
+  const isTrainer    = user.user_role === 'admin';
+  const trainerLabel = user.trainer_name ?? (user.trainer_id ? 'Trainer' : null);
+
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-700 px-4 py-4 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 active:opacity-80 transition"
+    >
+      {/* Avatar + name + score */}
+      <div className="flex items-start gap-3">
+        <span className={`w-10 h-10 rounded-full text-sm font-bold flex items-center justify-center shrink-0 select-none ${
+          isTrainer
+            ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+            : 'bg-blue-100   dark:bg-blue-900/40   text-blue-700   dark:text-blue-300'
+        }`}>
+          {initials}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{displayName}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+            </div>
+            {user.latest_score !== null && (
+              <div className="flex flex-col items-end shrink-0 gap-1">
+                <span className="text-base font-extrabold text-gray-900 dark:text-white leading-none">
+                  {user.latest_score}
+                </span>
+                {user.latest_category && (
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${catStyle}`}>
+                    {user.latest_category}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Meta row */}
+      <div className="mt-3 flex items-center gap-2 flex-wrap">
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+          isTrainer
+            ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+        }`}>
+          {isTrainer ? 'Trainer' : 'User'}
+        </span>
+        {trainerLabel ? (
+          <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[140px]">
+            {trainerLabel}
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
+            Unassigned
+          </span>
+        )}
+        {user.latest_bmi !== null && (
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            BMI {user.latest_bmi.toFixed(1)}
+          </span>
+        )}
+        <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">
+          {user.total_assessments} session{user.total_assessments !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {/* Sparkline */}
+      {(user.score_history?.length ?? 0) >= 2 && (
+        <div className="mt-2">
+          <ScoreSparkline scores={user.score_history ?? []} />
+        </div>
+      )}
+    </div>
   );
 }
 

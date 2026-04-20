@@ -206,14 +206,14 @@ export default function MyGym() {
                       All Gyms
                     </button>
                   )}
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="min-w-0">
                       <p className="text-indigo-200 text-[11px] font-semibold uppercase tracking-widest mb-1">
                         {isSuperAdminDrilldown ? 'Trainer Gym' : 'Your Gym'}
                       </p>
                       <h1 className="text-xl font-bold text-white">{gymName}</h1>
                       {trainerDisplayName && (
-                        <p className="text-indigo-200 text-sm mt-0.5">Trainer: {trainerDisplayName}</p>
+                        <p className="text-indigo-200 text-sm mt-0.5 truncate">Trainer: {trainerDisplayName}</p>
                       )}
                     </div>
                     <div className="text-right shrink-0">
@@ -287,7 +287,7 @@ export default function MyGym() {
 
                   {trainerGym && (
                     <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
                         <div>
                           <p className="text-base font-bold text-gray-900 dark:text-white">
                             {trainerGym.gym_name ?? 'Your Gym'}

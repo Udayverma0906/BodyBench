@@ -130,8 +130,7 @@ export default function TrendChart({
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      className="w-full"
-      style={{ height: H }}
+      className="w-full h-auto"
       aria-label="Trend chart"
     >
       <defs>
