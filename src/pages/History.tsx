@@ -281,14 +281,9 @@ export default function History() {
     );
   };
 
-  // Clamp page when the list shrinks (e.g. after a delete)
-  useEffect(() => {
-    const total = Math.max(1, Math.ceil(assessments.length / PAGE_SIZE));
-    if (page > total) setPage(total);
-  }, [assessments.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const totalPages  = Math.max(1, Math.ceil(assessments.length / PAGE_SIZE));
-  const pageItems   = assessments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const safePage    = Math.min(page, totalPages);
+  const pageItems   = assessments.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const goToPage = (next: number) => {
     setPage(next);
@@ -400,13 +395,13 @@ export default function History() {
             {totalPages > 1 && (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2">
                 <p className="text-xs text-gray-400 dark:text-gray-500 text-center sm:text-left">
-                  {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, assessments.length)} of {assessments.length}
+                  {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, assessments.length)} of {assessments.length}
                 </p>
 
                 <div className="flex items-center justify-center gap-1">
                   <button
-                    onClick={() => goToPage(page - 1)}
-                    disabled={page === 1}
+                    onClick={() => goToPage(safePage - 1)}
+                    disabled={safePage === 1}
                     aria-label="Previous page"
                     className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
                   >
@@ -419,7 +414,7 @@ export default function History() {
                       onClick={() => goToPage(p)}
                       className={[
                         "w-7 h-7 rounded-lg text-xs font-semibold transition",
-                        p === page
+                        p === safePage
                           ? "bg-indigo-600 text-white"
                           : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800",
                       ].join(" ")}
@@ -429,8 +424,8 @@ export default function History() {
                   ))}
 
                   <button
-                    onClick={() => goToPage(page + 1)}
-                    disabled={page === totalPages}
+                    onClick={() => goToPage(safePage + 1)}
+                    disabled={safePage === totalPages}
                     aria-label="Next page"
                     className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
                   >
