@@ -308,10 +308,10 @@ export default function History() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Navbar />
 
-      <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Assessment History
           </h1>
@@ -326,7 +326,7 @@ export default function History() {
               onClick={() => navigate("/assessment")}
               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition"
             >
-              New Assessment
+              New
             </button>
           </div>
         </div>
@@ -398,12 +398,12 @@ export default function History() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-2">
-                <p className="text-xs text-gray-400 dark:text-gray-500">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2">
+                <p className="text-xs text-gray-400 dark:text-gray-500 text-center sm:text-left">
                   {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, assessments.length)} of {assessments.length}
                 </p>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center gap-1">
                   <button
                     onClick={() => goToPage(page - 1)}
                     disabled={page === 1}
