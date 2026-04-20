@@ -40,7 +40,7 @@ function BarChart({
   for (let v = 0; v <= yMax; v += step) grids.push(v);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }} aria-label="Bar chart">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" aria-label="Bar chart">
       {/* Grid lines + Y labels */}
       {grids.map((v) => {
         const y = barY(v);

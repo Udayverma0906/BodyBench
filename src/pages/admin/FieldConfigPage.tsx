@@ -256,7 +256,7 @@ function FieldForm({
 
       {/* ── Identity ── */}
       {isEdit ? (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <LabelWrap label="Label *" error={errors.label}>
             <input
               className={`${INPUT_CLS} ${errors.label ? INPUT_ERR : ""}`}
@@ -285,7 +285,7 @@ function FieldForm({
         </LabelWrap>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <LabelWrap label="Section *" error={errors.section} hint={SECTION_HINT[form.section]}>
           <select
             className={`${INPUT_CLS} ${errors.section ? INPUT_ERR : ""}`}
@@ -326,7 +326,7 @@ function FieldForm({
       </LabelWrap>
 
       {/* ── Input constraints ── */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <LabelWrap label="Min Value">
           <input
             type="number"
@@ -838,10 +838,10 @@ export default function FieldConfigPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Navbar />
 
-      <div className="max-w-4xl mx-auto px-6 py-10 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8">
 
         {/* Page header */}
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Field Configuration</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

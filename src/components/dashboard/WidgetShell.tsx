@@ -5,9 +5,9 @@ import type { WidgetLayoutProps } from "../../types/widget";
 // Must be full strings so Tailwind's JIT scanner picks them up.
 const COL_SPAN = {
   1: "col-span-1",
-  2: "col-span-2",
-  3: "col-span-3",
-  4: "col-span-4",
+  2: "col-span-1 sm:col-span-2",
+  3: "col-span-1 sm:col-span-2 lg:col-span-3",
+  4: "col-span-1 sm:col-span-2 lg:col-span-4",
 } as const;
 
 const ROW_SPAN = {
