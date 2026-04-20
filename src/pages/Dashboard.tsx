@@ -24,7 +24,7 @@ function DateRangePicker({
   onChange: (v: DateRange) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-800 rounded-xl p-1">
+    <div className="flex items-center flex-wrap gap-1 bg-gray-100 dark:bg-zinc-800 rounded-xl p-1">
       {DATE_RANGES.map(({ label, value: v }) => (
         <button
           key={v}
@@ -64,7 +64,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-6">
 
         {/* Page header */}
         <div className="flex items-start justify-between flex-wrap gap-4">
