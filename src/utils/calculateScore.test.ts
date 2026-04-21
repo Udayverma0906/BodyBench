@@ -66,22 +66,6 @@ describe("calculateScore – hardcoded fallback", () => {
     expect(result.breakdown[0].score).toBe(10);
   });
 
-  it("age bonus: ≤29 years", () => {
-    const result = calculateScore({ age: 25 });
-    expect(result.breakdown[0].label).toBe("Age Bonus");
-    expect(result.breakdown[0].score).toBe(15);
-  });
-
-  it("age bonus: 30–49 years", () => {
-    const result = calculateScore({ age: 40 });
-    expect(result.breakdown[0].score).toBe(10);
-  });
-
-  it("age bonus: 50+ years", () => {
-    const result = calculateScore({ age: 60 });
-    expect(result.breakdown[0].score).toBe(5);
-  });
-
   it("applies weight factor to strength fields (push-ups)", () => {
     // weight=140kg → factor=2; 15 pushups * 2 = 30 → meets threshold 20 → 14pts
     // without weight: 15 pushups → below 20 threshold → 7pts

@@ -1,6 +1,6 @@
 /**
  * Widened to Record so dynamic field_key values from field_configs work
- * alongside the hardcoded fallback keys (age, pushups, jogTime, …).
+ * alongside the hardcoded fallback keys (pushups, jogTime, …).
  * All existing access patterns (data.pushups, data.jogTime) still type-check
  * because Record<string, …> allows any string property.
  */

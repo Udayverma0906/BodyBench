@@ -205,7 +205,7 @@ function groupByMonth(items: Assessment[]): { label: string; items: Assessment[]
 
 // ── Pagination ────────────────────────────────────────────────────────────────
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 4;
 
 function ChevronLeft() {
   return (
@@ -303,7 +303,7 @@ export default function History() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Navbar />
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -378,15 +378,17 @@ export default function History() {
           </div>
         ) : (
           <>
-            <div className="space-y-6">
+            <div className="space-y-8">
               {groupByMonth(pageItems).map(({ label, items }) => (
-                <div key={label} className="space-y-3">
+                <div key={label} className="space-y-4">
                   <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 px-1">
                     {label}
                   </p>
-                  {items.map((a) => (
-                    <AssessmentCard key={a.id} a={a} onDelete={handleDelete} />
-                  ))}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {items.map((a) => (
+                      <AssessmentCard key={a.id} a={a} onDelete={handleDelete} />
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

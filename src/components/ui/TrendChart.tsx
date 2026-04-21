@@ -51,8 +51,8 @@ export default function TrendChart({
   if (data.length < 2) return null;
 
   // ── Layout ────────────────────────────────────────────────────────────────
-  const W = 560, H = 180;
-  const padL = 36, padR = 12, padT = 20, padB = 46;
+  const W = 900, H = 280;
+  const padL = 48, padR = 20, padT = 28, padB = 64;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
 
@@ -101,8 +101,8 @@ export default function TrendChart({
   }
 
   // ── X-axis label indices (pixel-gap based, no overlap) ───────────────────
-  // Each label is ~54px wide at font-size 9. Keep at least 58px between centers.
-  const MIN_LABEL_GAP = 58;
+  // Each label is ~54px wide at font-size 9. Keep at least 80px between centers.
+  const MIN_LABEL_GAP = 80;
   const labelIndices: number[] = [0];
   for (let i = 1; i < n; i++) {
     const prev = labelIndices[labelIndices.length - 1];
@@ -122,7 +122,7 @@ export default function TrendChart({
   const labelSet = new Set(labelIndices);
 
   // ── Tooltip geometry ──────────────────────────────────────────────────────
-  const TT_W = 90, TT_H = 44;
+  const TT_W = 110, TT_H = 56;
 
   const gradId   = `trendGrad_${uid}`;
   const shadowId = `trendShadow_${uid}`;
@@ -135,7 +135,7 @@ export default function TrendChart({
     >
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor={color} stopOpacity="0.18" />
+          <stop offset="0%"   stopColor={color} stopOpacity="0.16" />
           <stop offset="100%" stopColor={color} stopOpacity="0.01" />
         </linearGradient>
         <filter id={shadowId} x="-20%" y="-20%" width="140%" height="140%">
@@ -151,15 +151,15 @@ export default function TrendChart({
             <line
               x1={padL} y1={y} x2={W - padR} y2={y}
               stroke="currentColor"
-              strokeOpacity="0.07"
-              strokeWidth="1"
-              strokeDasharray="4 5"
+              strokeOpacity="0.06"
+              strokeWidth="1.5"
+              strokeDasharray="0"
             />
             <text
-              x={padL - 6} y={y + 4}
+              x={padL - 10} y={y + 4}
               textAnchor="end"
-              fontSize="9.5"
-              className="fill-gray-400 dark:fill-gray-600"
+              fontSize="11"
+              className="fill-gray-600 dark:fill-gray-400 font-semibold"
             >
               {v}
             </text>
@@ -205,9 +205,9 @@ export default function TrendChart({
                 x1={p.x} y1={padT}
                 x2={p.x} y2={H - padB}
                 stroke={color}
-                strokeOpacity="0.2"
-                strokeWidth="1"
-                strokeDasharray="3 3"
+                strokeOpacity="0.15"
+                strokeWidth="1.5"
+                strokeDasharray="0"
               />
             )}
 
@@ -216,13 +216,13 @@ export default function TrendChart({
 
             {/* Halo on hover */}
             {isHovered && (
-              <circle cx={p.x} cy={p.y} r={9} fill={color} fillOpacity="0.12" />
+              <circle cx={p.x} cy={p.y} r={12} fill={color} fillOpacity="0.08" />
             )}
 
             {/* Dot */}
             <circle
               cx={p.x} cy={p.y}
-              r={isHovered ? 5.5 : 3.5}
+              r={isHovered ? 6.5 : 4.5}
               fill={isHovered ? "white" : color}
               stroke={color}
               strokeWidth={isHovered ? 2.5 : 2}
@@ -236,16 +236,16 @@ export default function TrendChart({
                 <rect
                   x={ttX} y={ttY}
                   width={TT_W} height={TT_H}
-                  rx="7"
+                  rx="9"
                   fill={color}
-                  fillOpacity="0.95"
+                  fillOpacity="0.96"
                   filter={`url(#${shadowId})`}
                 />
                 {/* Value */}
                 <text
-                  x={ttX + TT_W / 2} y={ttY + 17}
+                  x={ttX + TT_W / 2} y={ttY + 20}
                   textAnchor="middle"
-                  fontSize="14"
+                  fontSize="16"
                   fontWeight="700"
                   fill="white"
                 >
@@ -253,11 +253,11 @@ export default function TrendChart({
                 </text>
                 {/* Date · Time */}
                 <text
-                  x={ttX + TT_W / 2} y={ttY + 34}
+                  x={ttX + TT_W / 2} y={ttY + 40}
                   textAnchor="middle"
-                  fontSize="9"
+                  fontSize="10"
                   fill="white"
-                  fillOpacity="0.75"
+                  fillOpacity="0.9"
                 >
                   {fmtDate(d)} · {fmtTime(d)}
                 </text>
@@ -275,11 +275,11 @@ export default function TrendChart({
           <text
             key={i}
             textAnchor="middle"
-            fontSize="9.5"
-            className="fill-gray-400 dark:fill-gray-500"
+            fontSize="11"
+            className="fill-gray-700 dark:fill-gray-300 font-semibold"
           >
-            <tspan x={p.x} y={H - 26}>{fmtDate(d)}</tspan>
-            <tspan x={p.x} dy="13">{fmtTime(d)}</tspan>
+            <tspan x={p.x} y={H - 38}>{fmtDate(d)}</tspan>
+            <tspan x={p.x} dy="14">{fmtTime(d)}</tspan>
           </text>
         );
       })}

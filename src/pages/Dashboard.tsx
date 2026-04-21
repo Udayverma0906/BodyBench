@@ -4,7 +4,8 @@ import Navbar from "../components/layout/Navbar";
 import DashboardGrid from "../components/dashboard/DashboardGrid";
 import StatWidget from "../components/dashboard/widgets/StatWidget";
 import TrendWidget from "../components/dashboard/widgets/TrendWidget";
-import BarWidget from "../components/dashboard/widgets/BarWidget";
+import StrengthsWidget from "../components/dashboard/widgets/StrengthsWidget";
+import InsightsWidget from "../components/dashboard/widgets/InsightsWidget";
 import { useDashboardData, type DateRange } from "../hooks/useDashboardData";
 
 // ── Date range picker ─────────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-10 space-y-6">
 
         {/* Page header */}
         <div className="flex items-start justify-between flex-wrap gap-4">
@@ -132,7 +133,7 @@ export default function Dashboard() {
             colSpan={1}
           />
 
-          {/* ── Row 2: score trend ──────────────────────────────────────── */}
+          {/* ── Row 2: trends side by side ──────────────────────────────── */}
 
           <TrendWidget
             title="Score Trend"
@@ -141,10 +142,8 @@ export default function Dashboard() {
             data={data.scoreTimeSeries}
             yMin={0}
             yMax={100}
-            colSpan={4}
+            colSpan={2}
           />
-
-          {/* ── Row 3: BMI trend ───────────────────────────────────────── */}
 
           {!loading && bmiSeries.length > 0 && (
             <TrendWidget
@@ -154,18 +153,22 @@ export default function Dashboard() {
               data={bmiSeries}
               color="#22c55e"
               valueFormatter={v => v.toFixed(1)}
-              colSpan={4}
+              colSpan={2}
             />
           )}
 
-          {/* ── Row 4: breakdown bar chart ──────────────────────────────── */}
+          {/* ── Row 3: insights & strengths ─────────────────────────────── */}
 
-          <BarWidget
-            title="Avg Score by Metric"
-            subtitle="Percentage of max points per category, averaged across selected period"
-            loading={loading}
+          <StrengthsWidget
             data={data.avgBreakdown}
-            colSpan={4}
+            loading={loading}
+            colSpan={2}
+          />
+
+          <InsightsWidget
+            scoreTimeSeries={data.scoreTimeSeries}
+            loading={loading}
+            colSpan={2}
           />
 
         </DashboardGrid>
