@@ -12,21 +12,6 @@ import type { FieldConfig } from "../types/database";
 export const DEFAULT_FIELD_CONFIGS: FieldConfig[] = [
   // ── Personal ────────────────────────────────────────────────────────────────
   {
-    id: "__default_age",      admin_id: null, user_id: null,
-    label: "Age",             field_key: "age",      section: "personal",
-    field_type: "number",     placeholder: "e.g. 25",
-    description: null,        unit: null,
-    min_value: 1,             max_value: null,       step_value: 1,
-    required: false,          lower_is_better: true, visible: true,
-    is_deleted: false,        sort_order: 0,         created_at: "",
-    scoring_tiers: [
-      { threshold: 29,   points: 15 },
-      { threshold: 49,   points: 10 },
-      { threshold: 9999, points: 5  },
-    ],
-    max_points: 15,
-  },
-  {
     id: "__default_weight",   admin_id: null, user_id: null,
     label: "Weight",          field_key: "weight",   section: "personal",
     field_type: "number",     placeholder: "e.g. 70",

@@ -4,7 +4,8 @@ import { useDashboardData } from '../../hooks/useDashboardData';
 import DashboardGrid from '../dashboard/DashboardGrid';
 import StatWidget from '../dashboard/widgets/StatWidget';
 import TrendWidget from '../dashboard/widgets/TrendWidget';
-import BarWidget from '../dashboard/widgets/BarWidget';
+import StrengthsWidget from '../dashboard/widgets/StrengthsWidget';
+import InsightsWidget from '../dashboard/widgets/InsightsWidget';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ export default function ClientDetailPanel({ client, onClose }: Props) {
 
       {/* Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-2xl bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-full max-w-3xl bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{ zIndex: 1200 }}
@@ -185,7 +186,7 @@ export default function ClientDetailPanel({ client, onClose }: Props) {
               {!data.loading && data.bmiTimeSeries.length > 0 && (
                 <TrendWidget
                   title="BMI Trend"
-                  subtitle="Body Mass Index over time"
+                  subtitle={`Body Mass Index over time · Latest: ${data.bmiTimeSeries[data.bmiTimeSeries.length - 1].value.toFixed(1)}`}
                   loading={data.loading}
                   data={data.bmiTimeSeries}
                   color="#22c55e"
@@ -194,11 +195,15 @@ export default function ClientDetailPanel({ client, onClose }: Props) {
                 />
               )}
 
-              <BarWidget
-                title="Avg Score by Metric"
-                subtitle="% of max points per category"
-                loading={data.loading}
+              <StrengthsWidget
                 data={data.avgBreakdown}
+                loading={data.loading}
+                colSpan={4}
+              />
+
+              <InsightsWidget
+                scoreTimeSeries={data.scoreTimeSeries}
+                loading={data.loading}
                 colSpan={4}
               />
             </DashboardGrid>

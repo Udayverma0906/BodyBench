@@ -87,14 +87,6 @@ const SCORING: Record<string, MetricConfig> = {
       { threshold: Infinity, points: 5  },
     ],
   },
-  age: {
-    lowerIsBetter: true,
-    tiers: [
-      { threshold: 29,       points: 15 },
-      { threshold: 49,       points: 10 },
-      { threshold: Infinity, points: 5  },
-    ],
-  },
 };
 
 // Hardcoded field keys that get weight-adjusted in the fallback path.
@@ -176,7 +168,6 @@ export function calculateScore(
     situps:      "Sit-ups",
     flexibility: "Flexibility",
     restingHR:   "Recovery",
-    age:         "Age Bonus",
   };
 
   const raw: (RawMetric | null)[] = Object.entries(SCORING).map(([key, cfg]) => {

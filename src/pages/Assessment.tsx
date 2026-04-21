@@ -25,7 +25,6 @@ const FIELD_GROUPS = [
     heading: "Body Stats",
     note: "Used to adjust strength scores for body weight.",
     fields: [
-      { key: "age",    label: "Age",           step: 1,   min: 1,   placeholder: "e.g. 25"  },
       { key: "weight", label: "Weight (kg)",   step: 0.1, min: 1,   placeholder: "e.g. 70"  },
       { key: "height", label: "Height (cm)",   step: 0.1, min: 50,  placeholder: "e.g. 175" },
     ],
@@ -56,7 +55,6 @@ const FIELD_GROUPS = [
 ];
 
 const HARDCODED_VALIDATORS: Record<string, (v?: number) => string> = {
-  age:         (v) => (v !== undefined && v <= 0              ? "Age must be positive"          : ""),
   height:      (v) => (v !== undefined && v <= 0              ? "Height must be positive"       : ""),
   weight:      (v) => (v !== undefined && v <= 0              ? "Weight must be positive"       : ""),
   pushups:     (v) => (v !== undefined && v < 0               ? "Can't be negative"             : ""),

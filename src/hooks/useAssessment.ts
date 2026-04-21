@@ -5,7 +5,6 @@ type Validator = (v?: number) => string;
 
 // Only validate range when a value is actually provided — no field is required.
 const VALIDATORS: Record<keyof AssessmentForm, Validator> = {
-  age:         (v) => (v !== undefined && v <= 0          ? "Age must be positive"          : ""),
   height:      (v) => (v !== undefined && v <= 0          ? "Height must be positive"        : ""),
   weight:      (v) => (v !== undefined && v <= 0          ? "Weight must be positive"        : ""),
   pushups:     (v) => (v !== undefined && v < 0           ? "Can't be negative"              : ""),
