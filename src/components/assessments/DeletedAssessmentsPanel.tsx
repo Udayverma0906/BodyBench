@@ -124,17 +124,37 @@ export default function DeletedAssessmentsPanel({
   // Fetch deleted items whenever the panel opens
   useEffect(() => {
     if (!isOpen) return;
-    setLoading(true);
-    supabase
-      .from("assessments")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("is_active", false)
-      .order("taken_at", { ascending: false })
-      .then(({ data }) => {
-        setItems((data as Assessment[]) ?? []);
-        setLoading(false);
-      });
+    
+    let isMounted = true;
+    
+    const fetchDeletedItems = async () => {
+      try {
+        const { data } = await supabase
+          .from("assessments")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("is_active", false)
+          .order("taken_at", { ascending: false });
+        
+        if (isMounted) {
+          setItems((data as Assessment[]) ?? []);
+        }
+      } catch {
+        if (isMounted) {
+          setItems([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchDeletedItems();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [isOpen, userId]);
 
   const handleRestore = async (a: Assessment) => {
