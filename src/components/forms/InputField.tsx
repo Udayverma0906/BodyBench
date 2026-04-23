@@ -32,6 +32,8 @@ export default function InputField({
         max={max}
         step={step}
         placeholder={placeholder}
+        onWheel={(e) => (e.target as HTMLInputElement).blur()}
+        onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
         onChange={(e) => {
           const val = e.target.value;
           onChange(val === "" ? null : Number(val));
