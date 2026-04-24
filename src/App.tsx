@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminRoute from "./components/auth/AdminRoute";
 import SuperAdminRoute from "./components/auth/SuperAdminRoute";
+import UserSettingsPage from "./pages/UserSettingsPage";
 import FieldConfigPage from "./pages/admin/FieldConfigPage";
 import TrainerRequestsPage from "./pages/admin/TrainerRequestsPage";
 import SettingsPage from "./pages/admin/SettingsPage";
@@ -172,6 +173,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <UserSettingsPage />
             </ProtectedRoute>
           }
         />

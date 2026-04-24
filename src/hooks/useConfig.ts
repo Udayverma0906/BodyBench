@@ -8,6 +8,7 @@ export const CONFIG_DEFAULTS: Record<string, string> = {
   idle_warning_secs: '60',    // 60 seconds
   default_landing:   '/',
   default_theme:     'dark',
+  unit_system:       'metric',
 };
 
 // ── Definition schema ─────────────────────────────────────────────────────────
@@ -20,6 +21,7 @@ export interface ConfigDef {
   unit?:          string;
   section:        string;
   requiresReload?: boolean;
+  userVisible?:   boolean;   // true = shown on the user settings page too (not admin-only)
 }
 
 // Adding a new setting = one entry here, no other code changes needed.
@@ -50,6 +52,7 @@ export const CONFIG_DEFINITIONS: ConfigDef[] = [
     description: 'Page to navigate to immediately after login.',
     type:        'select',
     section:     'Navigation',
+    userVisible: true,
     options: [
       { label: 'Landing Page', value: '/'          },
       { label: 'Dashboard',    value: '/dashboard'  },
@@ -63,9 +66,23 @@ export const CONFIG_DEFINITIONS: ConfigDef[] = [
     description: 'Preferred colour scheme applied on login.',
     type:        'select',
     section:     'Appearance',
+    userVisible: true,
     options: [
       { label: 'Light', value: 'light' },
       { label: 'Dark',  value: 'dark'  },
+    ],
+  },
+  // ── Units ─────────────────────────────────────────────────────────────────
+  {
+    key:         'unit_system',
+    label:       'Unit system',
+    description: 'Units used when entering height and weight in assessments.',
+    type:        'select',
+    section:     'Units',
+    userVisible: true,
+    options: [
+      { label: 'Metric (kg, cm)',    value: 'metric'   },
+      { label: 'Imperial (lbs, in)', value: 'imperial' },
     ],
   },
 ];

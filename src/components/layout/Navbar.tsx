@@ -787,6 +787,14 @@ export default function Navbar({ onBack }: Props) {
                 My Gym
               </Link>
             )}
+            {user && !isAdmin && (
+              <Link
+                to="/settings"
+                className="hidden md:inline-flex px-3 py-1.5 text-sm font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                Settings
+              </Link>
+            )}
             {isAdmin && (
               <Link
                 to="/admin/fields"
@@ -920,6 +928,15 @@ export default function Navbar({ onBack }: Props) {
             >
               My Gym
             </Link>
+            {!isAdmin && (
+              <Link
+                to="/settings"
+                onClick={closeMenu}
+                className="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                Settings
+              </Link>
+            )}
 
             {isAdmin && (
               <>

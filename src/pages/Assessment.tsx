@@ -4,6 +4,7 @@ import Button from "../components/ui/Button";
 import Navbar from "../components/layout/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { useFieldConfigs } from "../hooks/useFieldConfigs";
+import { useConfig } from "../hooks/useConfig";
 import type { AssessmentForm } from "../types/assessment";
 import type { FieldConfig } from "../types/database";
 
@@ -104,16 +105,86 @@ function SkeletonCard() {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
+// ─── Unit helpers ─────────────────────────────────────────────────────────────
+function unitLabel(fieldKey: string, isImperial: boolean, metricLabel: string): string {
+  if (isImperial && fieldKey === "weight") return "Weight (lbs)";
+  return metricLabel;
+}
+
+function unitPlaceholder(fieldKey: string, isImperial: boolean, fallback?: string): string | undefined {
+  if (isImperial && fieldKey === "weight") return "e.g. 165";
+  return fallback;
+}
+
+// ─── Imperial height — two inputs: feet + inches ──────────────────────────────
+const INPUT_BASE = [
+  "w-full pl-4 pr-9 py-3 rounded-xl border bg-white dark:bg-gray-900",
+  "text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600",
+  "outline-none transition",
+].join(" ");
+const INPUT_NORMAL = "border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900 focus:border-indigo-400 dark:focus:border-indigo-500";
+const INPUT_ERROR  = "border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900";
+
+function ImperialHeightInput({ heightFt, heightIn, error, onFtChange, onInChange }: {
+  heightFt?: number; heightIn?: number; error?: string;
+  onFtChange: (v: number | undefined) => void;
+  onInChange: (v: number | undefined) => void;
+}) {
+  const cls = `${INPUT_BASE} ${error ? INPUT_ERROR : INPUT_NORMAL}`;
+  const prevent = (e: React.KeyboardEvent) => ["e", "E", "+", "-", "."].includes(e.key) && e.preventDefault();
+
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Height<span className="text-red-500 ml-0.5">*</span>
+      </label>
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <input
+            type="number" value={heightFt ?? ""} min={0} step={1} placeholder="5"
+            onWheel={e => (e.target as HTMLInputElement).blur()}
+            onKeyDown={prevent}
+            onChange={e => onFtChange(e.target.value === "" ? undefined : Math.max(0, Math.floor(Number(e.target.value))))}
+            className={cls}
+          />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-gray-500 pointer-events-none">ft</span>
+        </div>
+        <div className="relative flex-1">
+          <input
+            type="number" value={heightIn ?? ""} min={0} max={11} step={1} placeholder="11"
+            onWheel={e => (e.target as HTMLInputElement).blur()}
+            onKeyDown={prevent}
+            onChange={e => onInChange(e.target.value === "" ? undefined : Math.min(11, Math.max(0, Math.floor(Number(e.target.value)))))}
+            className={cls}
+          />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-gray-500 pointer-events-none">in</span>
+        </div>
+      </div>
+      {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
+    </div>
+  );
+}
+
 export default function Assessment({ onSubmit, onBack }: Props) {
   const { profile, user, isAdmin } = useAuth();
   // Admins see their own configured fields (admin_id = user.id).
   // Regular users see their assigned admin's fields via profile.admin_id.
   const adminId = isAdmin ? user?.id : profile?.admin_id;
   const { configs, loading: configsLoading } = useFieldConfigs(adminId);
+  const { get } = useConfig();
+  const isImperial = get("unit_system") === "imperial";
 
   const [form, setForm]           = useState<AssessmentForm>({});
   const [errors, setErrors]       = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [heightFt, setHeightFt]   = useState<number | undefined>();
+  const [heightIn, setHeightIn]   = useState<number | undefined>();
+
+  const updateImperialHeight = (ft: number | undefined, inches: number | undefined) => {
+    if (ft === undefined && inches === undefined) { updateField("height", null); return; }
+    const totalInches = (ft ?? 0) * 12 + (inches ?? 0);
+    updateField("height", totalInches > 0 ? totalInches : null);
+  };
 
   // True once loading is done and there is at least one configured field.
   const useDynamic = !configsLoading && configs.length > 0;
@@ -126,7 +197,9 @@ export default function Assessment({ onSubmit, onBack }: Props) {
     if (useDynamic) {
       const cfg = configs.find((c) => c.field_key === key);
       if (cfg) {
-        const effective = ALWAYS_REQUIRED_KEYS.has(cfg.field_key) ? { ...cfg, required: true } : cfg;
+        let effective = ALWAYS_REQUIRED_KEYS.has(cfg.field_key) ? { ...cfg, required: true } : cfg;
+        // Imperial height is stored as total inches; DB min/max are in cm — skip them
+        if (isImperial && key === "height") effective = { ...effective, min_value: null, max_value: null };
         err = validateDynamic(effective, val);
       }
     } else {
@@ -140,7 +213,8 @@ export default function Assessment({ onSubmit, onBack }: Props) {
 
     if (useDynamic) {
       for (const cfg of configs) {
-        const effective = ALWAYS_REQUIRED_KEYS.has(cfg.field_key) ? { ...cfg, required: true } : cfg;
+        let effective = ALWAYS_REQUIRED_KEYS.has(cfg.field_key) ? { ...cfg, required: true } : cfg;
+        if (isImperial && cfg.field_key === "height") effective = { ...effective, min_value: null, max_value: null };
         newErrors[cfg.field_key] = validateDynamic(effective, form[cfg.field_key]);
       }
       const hasAny = configs.some((c) => form[c.field_key] !== undefined);
@@ -165,7 +239,13 @@ export default function Assessment({ onSubmit, onBack }: Props) {
   const handleSubmit = () => {
     if (submitting || !validateAll()) return;
     setSubmitting(true);
-    onSubmit(form, useDynamic ? configs : []);
+    let submitted = form;
+    if (isImperial) {
+      submitted = { ...form };
+      if (submitted.weight !== undefined) submitted.weight = Math.round(submitted.weight * 0.453592 * 10) / 10;
+      if (submitted.height !== undefined) submitted.height = Math.round(submitted.height * 2.54 * 10) / 10;
+    }
+    onSubmit(submitted, useDynamic ? configs : []);
   };
 
   // Group dynamic configs by section (skip empty sections)
@@ -216,17 +296,25 @@ export default function Assessment({ onSubmit, onBack }: Props) {
                   )}
                 </div>
                 <div className="grid sm:grid-cols-2 gap-5">
-                  {fields.map((cfg) => (
+                  {fields.map((cfg) => isImperial && cfg.field_key === "height" ? (
+                    <ImperialHeightInput
+                      key={cfg.field_key}
+                      heightFt={heightFt} heightIn={heightIn}
+                      error={errors["height"]}
+                      onFtChange={ft  => { setHeightFt(ft);     updateImperialHeight(ft, heightIn);  }}
+                      onInChange={ins => { setHeightIn(ins);    updateImperialHeight(heightFt, ins); }}
+                    />
+                  ) : (
                     <InputField
                       key={cfg.field_key}
-                      label={cfg.label + (cfg.unit ? ` (${cfg.unit})` : "")}
+                      label={unitLabel(cfg.field_key, isImperial, cfg.label + (cfg.unit ? ` (${cfg.unit})` : ""))}
                       value={form[cfg.field_key]}
                       onChange={(v) => updateField(cfg.field_key, v)}
                       error={errors[cfg.field_key]}
                       step={cfg.step_value}
                       min={cfg.min_value ?? undefined}
                       max={cfg.max_value ?? undefined}
-                      placeholder={cfg.placeholder ?? undefined}
+                      placeholder={unitPlaceholder(cfg.field_key, isImperial, cfg.placeholder ?? undefined)}
                       required={cfg.required || ALWAYS_REQUIRED_KEYS.has(cfg.field_key)}
                     />
                   ))}
@@ -251,16 +339,24 @@ export default function Assessment({ onSubmit, onBack }: Props) {
                   )}
                 </div>
                 <div className="grid sm:grid-cols-2 gap-5">
-                  {fields.map(({ key, label, step, min, placeholder }) => (
+                  {fields.map(({ key, label, step, min, placeholder }) => isImperial && key === "height" ? (
+                    <ImperialHeightInput
+                      key={key}
+                      heightFt={heightFt} heightIn={heightIn}
+                      error={errors["height"]}
+                      onFtChange={ft  => { setHeightFt(ft);     updateImperialHeight(ft, heightIn);  }}
+                      onInChange={ins => { setHeightIn(ins);    updateImperialHeight(heightFt, ins); }}
+                    />
+                  ) : (
                     <InputField
                       key={key}
-                      label={label}
+                      label={unitLabel(key, isImperial, label)}
                       value={form[key]}
                       onChange={(v) => updateField(key, v)}
                       error={errors[key]}
                       step={step}
                       min={min}
-                      placeholder={placeholder}
+                      placeholder={unitPlaceholder(key, isImperial, placeholder)}
                       required={ALWAYS_REQUIRED_KEYS.has(key)}
                     />
                   ))}
