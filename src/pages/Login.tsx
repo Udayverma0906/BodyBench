@@ -105,6 +105,9 @@ export default function Login() {
   const [signupDone, setSignupDone]   = useState(false);
   const [forgotDone, setForgotDone]   = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showResend, setShowResend]     = useState(false);
+  const [resending, setResending]       = useState(false);
+  const [resendDone, setResendDone]     = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -140,9 +143,14 @@ export default function Login() {
     setSubmitting(true);
 
     try {
+      setShowResend(false);
+      setResendDone(false);
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) setError(error.message);
+        if (error) {
+          setError(error.message);
+          if (error.message.toLowerCase().includes("not confirmed")) setShowResend(true);
+        }
         // onAuthStateChange fires → useEffect above redirects
       } else {
         const { error } = await supabase.auth.signUp({
@@ -170,12 +178,27 @@ export default function Login() {
     else setForgotDone(true);
   };
 
+  const handleResend = async () => {
+    setResending(true);
+    const { error } = await supabase.auth.resend({ type: "signup", email });
+    setResending(false);
+    if (error) {
+      setError(`Failed to resend: ${error.message}`);
+    } else {
+      setShowResend(false);
+      setResendDone(true);
+      setError(null);
+    }
+  };
+
   const switchMode = (next: Mode) => {
     setMode(next);
     setError(null);
     setEmailError(null);
     setFullName('');
     setForgotDone(false);
+    setShowResend(false);
+    setResendDone(false);
   };
 
   if (loading) return null;
@@ -414,6 +437,29 @@ export default function Login() {
 
                   {error && (
                     <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+                  )}
+
+                  {showResend && (
+                    <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-sm space-y-1">
+                      <p className="text-amber-700 dark:text-amber-300 font-medium">Email not verified</p>
+                      <p className="text-amber-600 dark:text-amber-400 text-xs">
+                        Check your inbox for the confirmation link, or resend it below.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={resending}
+                        className="text-blue-600 dark:text-blue-400 font-medium hover:underline disabled:opacity-60 text-xs mt-1"
+                      >
+                        {resending ? "Sending…" : "Resend verification email →"}
+                      </button>
+                    </div>
+                  )}
+
+                  {resendDone && (
+                    <p className="text-sm text-green-600 dark:text-green-400 text-center">
+                      Verification email sent — check your inbox.
+                    </p>
                   )}
 
                   <button
