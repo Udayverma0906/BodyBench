@@ -54,9 +54,14 @@ const FIELD_GROUPS = [
   },
 ];
 
+// field_keys that are always required regardless of DB config
+const ALWAYS_REQUIRED_KEYS = new Set(["weight", "height"]);
+
 const HARDCODED_VALIDATORS: Record<string, (v?: number) => string> = {
-  height:      (v) => (v !== undefined && v <= 0              ? "Height must be positive"       : ""),
-  weight:      (v) => (v !== undefined && v <= 0              ? "Weight must be positive"       : ""),
+  height:      (v) => (v === undefined                        ? "Height is required"            :
+                        v <= 0                                ? "Height must be positive"       : ""),
+  weight:      (v) => (v === undefined                        ? "Weight is required"            :
+                        v <= 0                                ? "Weight must be positive"       : ""),
   pushups:     (v) => (v !== undefined && v < 0               ? "Can't be negative"             : ""),
   pullups:     (v) => (v !== undefined && v < 0               ? "Can't be negative"             : ""),
   squats:      (v) => (v !== undefined && v < 0               ? "Can't be negative"             : ""),
@@ -120,7 +125,10 @@ export default function Assessment({ onSubmit, onBack }: Props) {
     let err = "";
     if (useDynamic) {
       const cfg = configs.find((c) => c.field_key === key);
-      if (cfg) err = validateDynamic(cfg, val);
+      if (cfg) {
+        const effective = ALWAYS_REQUIRED_KEYS.has(cfg.field_key) ? { ...cfg, required: true } : cfg;
+        err = validateDynamic(effective, val);
+      }
     } else {
       err = HARDCODED_VALIDATORS[key]?.(val) ?? "";
     }
@@ -132,7 +140,8 @@ export default function Assessment({ onSubmit, onBack }: Props) {
 
     if (useDynamic) {
       for (const cfg of configs) {
-        newErrors[cfg.field_key] = validateDynamic(cfg, form[cfg.field_key]);
+        const effective = ALWAYS_REQUIRED_KEYS.has(cfg.field_key) ? { ...cfg, required: true } : cfg;
+        newErrors[cfg.field_key] = validateDynamic(effective, form[cfg.field_key]);
       }
       const hasAny = configs.some((c) => form[c.field_key] !== undefined);
       if (!hasAny)
@@ -218,6 +227,7 @@ export default function Assessment({ onSubmit, onBack }: Props) {
                       min={cfg.min_value ?? undefined}
                       max={cfg.max_value ?? undefined}
                       placeholder={cfg.placeholder ?? undefined}
+                      required={cfg.required || ALWAYS_REQUIRED_KEYS.has(cfg.field_key)}
                     />
                   ))}
                 </div>
@@ -251,6 +261,7 @@ export default function Assessment({ onSubmit, onBack }: Props) {
                       step={step}
                       min={min}
                       placeholder={placeholder}
+                      required={ALWAYS_REQUIRED_KEYS.has(key)}
                     />
                   ))}
                 </div>

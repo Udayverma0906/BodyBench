@@ -7,6 +7,7 @@ interface Props {
   max?: number;
   step?: number;
   placeholder?: string;
+  required?: boolean;
 }
 
 export default function InputField({
@@ -18,11 +19,12 @@ export default function InputField({
   max,
   step = 1,
   placeholder,
+  required,
 }: Props) {
   return (
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        {label}
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
 
       <input

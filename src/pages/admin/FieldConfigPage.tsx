@@ -23,6 +23,9 @@ const SECTION_HINT: Record<FieldConfig["section"], string> = {
 // field_keys that originated from the built-in defaults — used only for the "Standard" badge
 const STANDARD_KEYS = new Set(DEFAULT_FIELD_CONFIGS.map(d => d.field_key));
 
+// field_keys that are permanently required and cannot be edited, hidden, or deleted
+const LOCKED_FIELD_KEYS = new Set(["weight", "height"]);
+
 const DEFAULT_TIERS: Record<FieldConfig["section"], TierRow[]> = {
   personal:  [{ threshold: "29", points: "15" }, { threshold: "49", points: "10" }, { threshold: "99", points: "5" }],
   strength:  [{ threshold: "20", points: "20" }, { threshold: "10", points: "14" }, { threshold: "0",  points: "7" }],
@@ -130,13 +133,14 @@ interface FieldCardProps {
   config: FieldConfig;
   deleted?: boolean;
   isStandard?: boolean;     // shows "Standard" badge — informational only, no control difference
+  isLocked?: boolean;       // weight/height — cannot be edited, hidden, or deleted
   onEdit?: () => void;
   onDelete?: () => void;
   onToggleVisible?: () => void;
   onRestore?: () => void;
 }
 
-function FieldCard({ config, deleted = false, isStandard = false, onEdit, onDelete, onToggleVisible, onRestore }: FieldCardProps) {
+function FieldCard({ config, deleted = false, isStandard = false, isLocked = false, onEdit, onDelete, onToggleVisible, onRestore }: FieldCardProps) {
   const op = config.lower_is_better ? "≤" : "≥";
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 flex items-start gap-4 transition ${deleted ? "opacity-50" : ""}`}>
@@ -159,9 +163,14 @@ function FieldCard({ config, deleted = false, isStandard = false, onEdit, onDele
               Custom
             </span>
           )}
-          {config.required && (
+          {(config.required || isLocked) && (
             <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400">
               Required
+            </span>
+          )}
+          {isLocked && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+              Locked
             </span>
           )}
           {config.lower_is_better && (
@@ -198,6 +207,10 @@ function FieldCard({ config, deleted = false, isStandard = false, onEdit, onDele
           >
             Restore
           </button>
+        ) : isLocked ? (
+          <span className="text-xs px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 select-none">
+            System field
+          </span>
         ) : (
           <>
             <button
@@ -674,6 +687,7 @@ export default function FieldConfigPage() {
   }
 
   function openEdit(config: FieldConfig) {
+    if (LOCKED_FIELD_KEYS.has(config.field_key)) return;
     setEditingId(config.id);
     setForm(formFromConfig(config));
     setFormErrors({});
@@ -812,7 +826,7 @@ export default function FieldConfigPage() {
   // ── Toggle visible (inline, no confirm needed) ────────────────────────────
 
   async function handleToggleVisible(config: FieldConfig) {
-    if (!user) return;
+    if (!user || LOCKED_FIELD_KEYS.has(config.field_key)) return;
     const next = !config.visible;
     await supabase
       .from("field_configs")
@@ -880,6 +894,7 @@ export default function FieldConfigPage() {
                         key={cfg.id}
                         config={cfg}
                         isStandard={STANDARD_KEYS.has(cfg.field_key)}
+                        isLocked={LOCKED_FIELD_KEYS.has(cfg.field_key)}
                         onEdit={() => openEdit(cfg)}
                         onDelete={() => setDeleteId(cfg.id)}
                         onToggleVisible={() => handleToggleVisible(cfg)}

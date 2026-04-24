@@ -134,6 +134,7 @@ export function calculateScore(
     for (const cfg of fieldConfigs) {
       const rawVal = data[cfg.field_key];
       if (rawVal === undefined) continue;
+      if (cfg.section === "personal") continue;  // personal fields are adjustments, not scored
       if (cfg.max_points <= 0) continue;   // field contributes nothing to score
 
       // Strength fields are weight-adjusted; all other sections are raw.
