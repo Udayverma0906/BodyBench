@@ -148,7 +148,7 @@ function App() {
           path="/result"
           element={
             <ProtectedRoute>
-              <Result onRestart={() => navigate("/")} />
+              <Result />
             </ProtectedRoute>
           }
         />

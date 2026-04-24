@@ -1,4 +1,4 @@
-import { useLocation, Navigate } from "react-router-dom";
+import { useLocation, Navigate, useNavigate } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Button from "../components/ui/Button";
 import ScoreRing from "../components/ui/ScoreRing";
@@ -11,10 +11,6 @@ interface ResultState {
   breakdown: ScoreBreakdown[];
   formData?: AssessmentForm;
   saveFailed?: boolean;
-}
-
-interface Props {
-  onRestart: () => void;
 }
 
 // ── Fitness score styles ──────────────────────────────────────────────────────
@@ -105,8 +101,9 @@ function bmiToMarkerPct(bmi: number): number {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function Result({ onRestart }: Props) {
+export default function Result() {
   const location = useLocation();
+  const navigate = useNavigate();
   const state = location.state as ResultState | null;
 
   if (!state) return <Navigate to="/" replace />;
@@ -248,9 +245,14 @@ export default function Result({ onRestart }: Props) {
           </div>
         </div>
 
-        <Button fullWidth variant="outline" onClick={onRestart}>
-          Take Assessment Again
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button fullWidth onClick={() => navigate("/dashboard")}>
+            Go to Dashboard
+          </Button>
+          <Button fullWidth variant="outline" onClick={() => navigate("/assessment")}>
+            Take Assessment Again
+          </Button>
+        </div>
       </div>
     </div>
   );
