@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import UpdatePassword from "./pages/UpdatePassword";
@@ -25,6 +25,12 @@ import { supabase } from "./lib/supabase";
 import { useAuth } from "./context/AuthContext";
 import type { AssessmentForm } from "./types/assessment";
 import type { FieldConfig } from "./types/database";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 
 // ── AuthenticatedApp — idle timeout + post-login config only runs while logged in
 function AuthenticatedApp({ children }: { children: React.ReactNode }) {
@@ -132,6 +138,7 @@ function App() {
 
   return (
     <AuthenticatedApp>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Landing onStart={() => navigate("/assessment")} />} />
         <Route path="/login" element={<Login />} />
